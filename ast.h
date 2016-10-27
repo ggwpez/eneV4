@@ -56,6 +56,7 @@ typedef enum unop
 	UNOP_NOT,
 	UNOP_POP,		// pop stack
 	UNOP_CPY,		// copy stack
+	UNOP_DRF,
 	UNOP_size
 } unop_t;
 
@@ -74,7 +75,6 @@ void unop_print(unop_node_t* node);
 // START BINARY
 typedef enum binop
 {
-	BINOP_SEQ,			// execute sequential and ignore return value
 	BINOP_ADD,
 	BINOP_SUB,
 	BINOP_MUL,
@@ -84,6 +84,7 @@ typedef enum binop
 	BINOP_SML,
 	BINOP_GRT,
 	BINOP_AND,
+	BINOP_SEQ,		// c comma operator, result is the last expression, right assoc.
 	BINOP_OR,
 	BINOP_size
 } binop_t;

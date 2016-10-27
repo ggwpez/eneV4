@@ -84,7 +84,7 @@ void unop_del(unop_node_t* node)
 	node->t = UNOP_size;
 }
 
-char const* unop_strings[] = { "!", "^", "$" };
+char const* unop_strings[] = { "!", "^", "$", "~" };
 static_assert(_countof(unop_strings) == UNOP_size, "unnop_strings invalid");
 void unop_print(unop_node_t* node)
 {
@@ -109,11 +109,13 @@ void binop_del(binop_node_t* node)
 	node->t = BINOP_size;
 }
 
-char const* binop_strings[] = { "seq", "+", "-", "*", "/", "~", "?", "<", ">", "&", "|" };
+char const* binop_strings[] = { "+", "-", "*", "/", "~", "?", "<", ">", "&", ",", "|" };
 static_assert(_countof(binop_strings) == BINOP_size, "binop_strings invalid");
 void binop_print(binop_node_t* node)
 {
-	printf("<binop("), ast_print(node->x), putchar(','), ast_print(node->y), printf(",%s)>", binop_strings[(int)node->t]);
+	printf("<binop("), ast_print(node->x), putchar(','),
+			node->x == node->y ? printf("<&top>") : ast_print(node->y),
+	printf(",%s)>", binop_strings[(int)node->t]);
 }
 
 ast_t* program_new()
