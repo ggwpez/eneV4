@@ -17,8 +17,6 @@
 \n					{ return T_NEWLINE; }
 
 %x // BINOP
-"$^"	{ return T_ATLEAST_S1; }
-"^$"	{ return T_ATLEAST_S2; }
 "+"		{ return T_ADD; }
 "-"		{ return T_SUB; }
 "*"		{ return T_MUL; }

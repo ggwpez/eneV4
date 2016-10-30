@@ -32,12 +32,13 @@ typedef void(*print_ptr)(void*);
 print_ptr ast_prints[] = { (print_ptr)atom_print, (print_ptr)unop_print, (print_ptr)binop_print, (print_ptr)program_print };
 static_assert(_countof(ast_prints) == AST_size, "ast_prints invalid");
 
-void ast_print(ast_ptr val)
+int ast_print(ast_ptr val)
 {
 	assert(val);
 	assert((unsigned)val->t < AST_size);
 
 	ast_prints[(int)val->t](val->node);
+	return 0;			// <- just that i can use it in ternary
 }
 
 ast_t* atom_new(atom_t t, void const* value)
@@ -64,7 +65,7 @@ void atom_print(atom_node_t* val)
 		printf("<int=%i>", val->v0);
 	else if (val->t == ATOM_FLOAT)
 		printf("<float=%f>", val->v1);
-	else
+	else if (val->t == ATOM_REF_TO_RES)
 		printf("<&top>");
 }
 

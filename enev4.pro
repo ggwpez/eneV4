@@ -22,7 +22,7 @@ flex.depends = ${QMAKE_VAR__PRO_FILE_PWD_}/y.tab.h
 flex.name = flex
 QMAKE_EXTRA_COMPILERS += flex
 
-bison.commands = bison --defines=${QMAKE_VAR__PRO_FILE_PWD_}/y.tab.h -t -y ${QMAKE_FILE_IN} -Wno-other
+bison.commands = bison -v --defines=${QMAKE_VAR__PRO_FILE_PWD_}/y.tab.h -t -y ${QMAKE_FILE_IN} -Wno-other
 bison.input = BISONSOURCES
 bison.output = y.tab.c
 bison.variable_out = SOURCES

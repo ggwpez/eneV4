@@ -24,13 +24,14 @@ typedef ast_t* ast_ptr;
 
 ast_t* ast_new(ast_type_t t, ast_ptr node);
 void ast_del(ast_ptr val);
-void ast_print(ast_ptr val);
+int ast_print(ast_ptr val);
 
 // START ATOM
 typedef enum atom
 {
 	ATOM_INT,
 	ATOM_FLOAT,
+	ATOM_REF_TO_RES,			// a reference to the value on below in the stack
 	ATOM_size
 } atom_t;
 
@@ -42,6 +43,7 @@ typedef struct atom_node
 	{
 		int v0;
 		float v1;
+		ast_ptr v2;
 	};
 } atom_node_t;
 
@@ -127,7 +129,9 @@ void ast_vector_del(ast_vector_t* v);
 ast_vector_t* ast_vector_resize(ast_vector_t* v, size_t new_capacity);
 size_t ast_vector_size(ast_vector_t *);
 ast_ptr ast_vector_at(ast_vector_t* v, size_t i);
+ast_ptr ast_vector_rat(ast_vector_t* v, size_t ri);		// reverse at()
 ast_ptr ast_vector_push_back(ast_vector_t* v, ast_ptr e);
+ast_ptr ast_vector_pop_back(ast_vector_t* v);
 void ast_vector_print(ast_vector_t* v);
 // END VECTOR
 #endif // AST_H
