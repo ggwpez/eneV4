@@ -22,6 +22,7 @@ void ast_vector_del(ast_vector_t* v)
 		ast_ptr e = ast_vector_at(v, i);
 		ast_del(e);
 	}
+
 	free(v);
 }
 
@@ -59,7 +60,7 @@ ast_vector_t* ast_vector_resize(ast_vector_t* v, size_t new_capacity)
 size_t ast_vector_size(ast_vector_t* v)
 {
 	assert(v);
-	return (v->ptr -v->data);
+	return !v->data ? 0 : (v->ptr -v->data);
 }
 
 ast_ptr ast_vector_at(ast_vector_t* v, size_t i)
@@ -88,7 +89,7 @@ ast_ptr ast_vector_rat(ast_vector_t* v, size_t i)
 ast_ptr ast_vector_push_back(ast_vector_t* v, ast_ptr e)
 {
 	assert(v);
-	assert(v->data);
+	assert(e);
 
 	size_t l = ast_vector_size(v);
 	if (l >= v->capacity)

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-ast_t* ast_new(ast_type_t t, ast_ptr node)
+ast_t* ast_new(ast_type_t t, void* node)
 {
 	ast_t* ret = malloc(sizeof(ast_t));
 
@@ -123,7 +123,7 @@ ast_t* program_new()
 {
 	malloc_ptr(program_node_t, ret);
 
-	ret->v = malloct(ast_vector_t);
+	ret->v = new(ast_vector, 5);
 
 	return new(ast, AST_PROGRAM, (ast_ptr)ret);
 }
@@ -132,7 +132,7 @@ void program_del(program_node_t* node)
 {
 	assert(node->v);
 
-	free(node->v);
+	delete(ast_vector, node->v);
 }
 
 void program_print(program_node_t* node)

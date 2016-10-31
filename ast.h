@@ -22,7 +22,7 @@ typedef struct ast
 } ast_t;
 typedef ast_t* ast_ptr;
 
-ast_t* ast_new(ast_type_t t, ast_ptr node);
+ast_t* ast_new(ast_type_t t, void* node);
 void ast_del(ast_ptr val);
 int ast_print(ast_ptr val);
 

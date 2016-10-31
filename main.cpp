@@ -9,20 +9,20 @@ extern "C"
 	extern int yyparse();
 	extern FILE* yyin;
 	void yyerror(const char* s);
-	ast_vector_t* root = NULL;
+
+	ast_vector_t* root_stack = NULL;
 }
 
 int main()
 {
 	yyin = stdin;
 
+	//do {
 
-
-	do {
-		root = new(ast_vector, 5);
-		yyparse();
-		ast_vector_del(root);
-	} while(!feof(yyin));
+	root_stack = new(ast_vector, 5);
+	yyparse();
+	ast_vector_del(root_stack);
+	//} while(!feof(yyin));
 
 	return 0;
 }
