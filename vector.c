@@ -83,7 +83,7 @@ ast_ptr ast_vector_rat(ast_vector_t* v, size_t i)
 	if (!l || i >= l)
 		return NULL;
 
-	return v->data[l -i];
+	return v->data[l -i -1];
 }
 
 ast_ptr ast_vector_push_back(ast_vector_t* v, ast_ptr e)
@@ -116,7 +116,7 @@ void ast_vector_print(ast_vector_t* v)
 {
 	size_t l = ast_vector_size(v);
 
-	printf("v->data=%p, v->ptr=%p, v->capacity=%zu, v->size=%zu\n", (void*)v->data, (void*)v->ptr, v->capacity, ast_vector_size(v));
+	//printf("v->data=%p, v->ptr=%p, v->capacity=%zu, v->size=%zu\n", (void*)v->data, (void*)v->ptr, v->capacity, ast_vector_size(v));
 	printf("<ast_vector(");
 	for (size_t i = 0; i < l; ++i)
 	{

@@ -9,6 +9,12 @@
 
 %}
 
+%option noyywrap
+/* to avoid warning: ‘yyunput’ defined but not used */
+%option nounput
+/* to avoid warning: ‘input’ defined but not used */
+%option noinput
+
 %%
 
 [ \t]	; // ignore all whitespace
@@ -33,6 +39,13 @@
 "^"		{ return T_POP; }
 "$"		{ return T_CPY; }
 "~"		{ return T_DRF; }
+%x // TOKS
+"("		{ return T_BO; }
+")"		{ return T_BC; }
+"["		{ return T_EBO; }
+"]"		{ return T_EBC; }
+"{"		{ return T_CBO; }
+"}"		{ return T_CBC; }
 %x // KEYWORD
 "while"		{ return T_WHILE; }
 "for"		{ return T_FOR; }
@@ -45,3 +58,6 @@
 "struct"	{ return T_STRUCT; }
 "exit"	{ return T_QUIT; }
 "q"		{ return T_QUIT; }
+
+<<EOF>>                     {   return T_EOF;    }
+.		{ return T_UNKNOWN; }

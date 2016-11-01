@@ -9,20 +9,19 @@ extern "C"
 	extern int yyparse();
 	extern FILE* yyin;
 	void yyerror(const char* s);
-
-	ast_vector_t* root_stack = NULL;
 }
 
 int main()
 {
 	yyin = stdin;
 
-	//do {
+	//do
+	//{
 
-	root_stack = new(ast_vector, 5);
 	yyparse();
-	ast_vector_del(root_stack);
-	//} while(!feof(yyin));
+	if (!feof(yyin))
+		printf("\nParsing stopped!\n");
+	//} while();
 
 	return 0;
 }

@@ -89,7 +89,7 @@ char const* unop_strings[] = { "!", "^", "$", "~" };
 static_assert(_countof(unop_strings) == UNOP_size, "unnop_strings invalid");
 void unop_print(unop_node_t* node)
 {
-	printf("<unop("), ast_print(node->node), printf(",%s)>", unop_strings[(int)node->t]);
+	printf("<unop("), node->node == NULL ? printf("<&top>") : ast_print(node->node), printf(",%s)>", unop_strings[(int)node->t]);
 }
 
 ast_t* binop_new(binop_t t, ast_ptr x, ast_ptr y)
