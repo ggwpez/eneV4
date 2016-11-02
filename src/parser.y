@@ -1,7 +1,8 @@
 %{
 #define YYDEBUG 1
 
-#include "ast.h"
+#include "src/ast/common.h"
+#include "src/vector.h"
 #include "y.tab.h"
 #include <stdio.h>
 #include <assert.h>
@@ -25,23 +26,25 @@ void crash(char const* msg)
 %token<ival> T_INT
 %token<fval> T_FLOAT
 %token T_ADD T_SUB T_MUL T_DIV T_DRF T_EQU T_SML T_GRT T_AND T_SEQ T_OR T_LEFT T_RIGHT
-%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC
+%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI
 %token T_NOT T_POP T_CPY
 %token T_WHILE T_FOR T_IF T_NSPACE T_ELSE T_BREAK T_GOON T_RETURN T_STRUCT
 %token T_NEWLINE T_QUIT T_UNKNOWN T_EOF
 
 %right T_SEQ
 
-%type<node> program
-%type<node>	exp program_exp term
+%type<node>	program program_stmt
+%type<node> block block_content block_stmt
+%type<node> exp term
 %type<stack> exp_stack
 %type<node> un_term bin_term
+%type<node> if_stmt while_stmt
 %type<node> atom
 %start program
 
 %%
 
-program: { $$ = NULL; } | program program_exp
+program: { $$ = NULL; } | program program_stmt
 {
 	if ($1)
 	{
@@ -66,7 +69,47 @@ program: { $$ = NULL; } | program program_exp
 	}
 }
 
-program_exp: exp T_NEWLINE { $$ = $1; }
+program_stmt:
+			T_NEWLINE { $$ = NULL; }
+			| exp T_SEMI { $$ = $1; }
+			| if_stmt
+			| while_stmt
+
+block: T_SEMI { $$ = NULL; } | T_CBO block_content T_CBC { $$ = $2; }
+
+block_content: { $$ = NULL; } | block_content block_stmt
+{
+	if ($1)
+	{
+		block_node_t* block = assert_cast($1, block_node_t*, AST_BLOCK);
+
+		if ($2)
+			ast_vector_push_back(block->v, $2);
+
+		$$ = $1;
+	}
+	else
+	{
+		ast_ptr ret = new(block,);
+		block_node_t* block = (block_node_t*)ret->node;		// this cast is assumed safe
+
+		if ($2)
+			ast_vector_push_back(block->v, $2);
+
+		$$ = ret;
+	}
+}
+
+block_stmt:
+			T_NEWLINE { $$ = NULL; }
+			| exp T_SEMI
+			| if_stmt
+			| while_stmt
+
+if_stmt: T_IF T_BO exp T_BC block T_ELSE block	{ $$ = new(if, $3, $5, $7); }
+	   | T_IF T_BO exp T_BC block				{ $$ = new(if, $3, $5, NULL); }
+
+while_stmt: T_WHILE T_BO exp T_BC block			{ $$ = new(while, $3, $5); }
 
 exp: exp_stack
 {

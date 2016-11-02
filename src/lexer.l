@@ -46,6 +46,7 @@
 "]"		{ return T_EBC; }
 "{"		{ return T_CBO; }
 "}"		{ return T_CBC; }
+";"		{ return T_SEMI; }
 %x // KEYWORD
 "while"		{ return T_WHILE; }
 "for"		{ return T_FOR; }
@@ -59,5 +60,5 @@
 "exit"	{ return T_QUIT; }
 "q"		{ return T_QUIT; }
 
-<<EOF>>                     {   return T_EOF;    }
-.		{ return T_UNKNOWN; }
+<<EOF>>			{   return T_EOF;    }
+.			{ return T_UNKNOWN; }
