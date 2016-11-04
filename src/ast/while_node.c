@@ -4,7 +4,7 @@
 ast_ptr while_new(ast_ptr cond, ast_ptr true_node)
 {
 	assert(cond);
-	malloc_ptr(while_node_t, ret);
+	define_ptr(while_node_t, ret);
 
 	ret->cond = cond;
 	ret->true_node = true_node;

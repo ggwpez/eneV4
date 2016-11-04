@@ -9,3 +9,7 @@
 #include "program_node.h"
 #include "unop_node.h"
 #include "while_node.h"
+#include "for_node.h"
+#include "ident_node.h"
+#include "type_node.h"
+#include "var_decl_node.h"

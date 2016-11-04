@@ -9,10 +9,17 @@ typedef enum ast_type
 	AST_ATOM,
 	AST_UNOP,
 	AST_BINOP,
+
 	AST_PROGRAM,
 	AST_BLOCK,
+
+	AST_IDENT,
+	AST_TYPE,
+
 	AST_IF,
 	AST_WHILE,
+	AST_FOR,
+
 	AST_size
 } ast_type_t;
 

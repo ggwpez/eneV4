@@ -17,7 +17,11 @@ SOURCES += \
     src/ast/atom_node.c \
     src/ast/binop_node.c \
     src/ast/unop_node.c \
-    src/main.c
+    src/main.c \
+    src/ast/for_node.c \
+    src/ast/var_decl_node.c \
+    src/ast/ident_node.c \
+    src/ast/type_node.c
 
 TEMPLATE = app
 
@@ -55,4 +59,8 @@ HEADERS += \
     src/ast/binop_node.h \
     src/ast/unop_node.h \
     src/ast/common.h \
-    src/vector.h
+    src/vector.h \
+    src/ast/for_node.h \
+    src/ast/var_decl_node.h \
+    src/ast/ident_node.h \
+    src/ast/type_node.h

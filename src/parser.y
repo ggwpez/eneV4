@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 void crash(char const* msg)
 {
@@ -19,12 +20,14 @@ void crash(char const* msg)
 %union {
 	int ival;
 	float fval;
+	char* str;
 	struct ast* node;
 	struct ast_vector* stack;
 }
 
 %token<ival> T_INT
 %token<fval> T_FLOAT
+%token<str> T_ID
 %token T_ADD T_SUB T_MUL T_DIV T_DRF T_EQU T_SML T_GRT T_AND T_SEQ T_OR T_LEFT T_RIGHT
 %token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI
 %token T_NOT T_POP T_CPY
@@ -35,11 +38,14 @@ void crash(char const* msg)
 
 %type<node>	program program_stmt
 %type<node> block block_content block_stmt
-%type<node> exp term
+%type<node> exp
 %type<stack> exp_stack
-%type<node> un_term bin_term
-%type<node> if_stmt while_stmt
+%type<node> var_decl
+%type<node> term un_term bin_term
+%type<node> if_stmt while_stmt for_stmt
+%type<node> type
 %type<node> atom
+%type<node>   ident
 %start program
 
 %%
@@ -74,6 +80,8 @@ program_stmt:
 			| exp T_SEMI { $$ = $1; }
 			| if_stmt
 			| while_stmt
+			| for_stmt
+			| var_decl
 
 block: T_SEMI { $$ = NULL; } | T_CBO block_content T_CBC { $$ = $2; }
 
@@ -105,11 +113,18 @@ block_stmt:
 			| exp T_SEMI
 			| if_stmt
 			| while_stmt
+			| for_stmt
+
+ident: T_ID			{ $$ = new(ident, $1, true); }
+type: ident			{ $$ = new(type, new(ur_type, UR_TYPE_MOD_ID, $1, NULL)); }
+var_decl: type ident T_SEMI { $$ = new(var_decl, $1, ); }
 
 if_stmt: T_IF T_BO exp T_BC block T_ELSE block	{ $$ = new(if, $3, $5, $7); }
 	   | T_IF T_BO exp T_BC block				{ $$ = new(if, $3, $5, NULL); }
 
 while_stmt: T_WHILE T_BO exp T_BC block			{ $$ = new(while, $3, $5); }
+
+for_stmt: T_FOR T_BO exp T_SEMI exp T_SEMI exp T_BC block { $$ = new(for, $3, $5, $7, $9); }
 
 exp: exp_stack
 {

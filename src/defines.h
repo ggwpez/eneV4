@@ -11,7 +11,7 @@
 	#undef delete
 #endif
 #define malloct(t) (t*)(malloc(sizeof(t)))
-#define malloc_ptr(t, name) t* name = malloct(t)
+#define define_ptr(t, name) t* name = malloct(t)
 #define new(t, ...) (t##_new(__VA_ARGS__))
 #define delete(t, var) (t##_del(var))
 #define _countof(arr) (sizeof(arr) /sizeof(arr[0]))

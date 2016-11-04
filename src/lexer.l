@@ -60,5 +60,7 @@
 "exit"	{ return T_QUIT; }
 "q"		{ return T_QUIT; }
 
+[_a-bA-B][_a-zA-Z0-9]* { yylval.str = yytext; return T_ID; }
+
 <<EOF>>			{   return T_EOF;    }
 .			{ return T_UNKNOWN; }

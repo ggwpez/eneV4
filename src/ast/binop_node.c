@@ -3,7 +3,7 @@
 
 ast_ptr binop_new(binop_t t, ast_ptr x, ast_ptr y)
 {
-	malloc_ptr(binop_node_t, ret);
+	define_ptr(binop_node_t, ret);
 
 	ret->t = t;
 	ret->x = x;

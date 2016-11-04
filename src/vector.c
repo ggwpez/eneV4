@@ -10,7 +10,7 @@
 \
 BOOST_PP_CAT(t, _vector_t*) BOOST_PP_CAT(t, _vector_new)(size_t capacity)\
 {\
-	malloc_ptr(BOOST_PP_CAT(t, _vector_t), ret);\
+	define_ptr(BOOST_PP_CAT(t, _vector_t), ret);\
 \
 	memset(ret, 0, sizeof(BOOST_PP_CAT(t, _ptr)));\
 	BOOST_PP_CAT(t, _vector_resize)(ret, capacity);\

@@ -4,7 +4,7 @@
 ast_ptr if_new(ast_ptr cond, ast_ptr true_node, ast_ptr else_node)
 {
 	assert(cond);
-	malloc_ptr(if_node_t, ret);
+	define_ptr(if_node_t, ret);
 
 	ret->cond = cond;
 	ret->true_node = true_node;

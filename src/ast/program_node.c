@@ -5,7 +5,7 @@
 
 ast_ptr program_new()
 {
-	malloc_ptr(program_node_t, ret);
+	define_ptr(program_node_t, ret);
 
 	ret->v = new(ast_vector, AST_VEC_START_SIZE);
 

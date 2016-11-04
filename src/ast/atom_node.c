@@ -3,7 +3,7 @@
 
 ast_ptr atom_new(atom_t t, void const* value)
 {
-	malloc_ptr(atom_node_t, ret);
+	define_ptr(atom_node_t, ret);
 
 	ret->t = t;
 	if (t == ATOM_INT)

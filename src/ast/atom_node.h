@@ -2,7 +2,7 @@
 
 #include "ast.h"
 
-typedef enum atom
+typedef enum value
 {
 	ATOM_INT,
 	ATOM_FLOAT,

@@ -3,7 +3,7 @@
 
 ast_ptr unop_new(unop_t t, ast_ptr node)
 {
-	malloc_ptr(unop_node_t, ret);
+	define_ptr(unop_node_t, ret);
 
 	ret->t = t;
 	ret->node = node;
