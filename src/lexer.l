@@ -2,6 +2,7 @@
 
 %{
 #include <stdio.h>
+extern char* strdup(const char *s);		// this is POSIX, not standard C
 
 #define YY_DECL int yylex()
 
@@ -17,22 +18,20 @@
 
 %%
 
-[ \t]	; // ignore all whitespace
+[ \t\n]	; // ignore all whitespace
 [0-9]+\.[0-9]+		{ yylval.fval = atof(yytext); return T_FLOAT; }
 [0-9]+				{ yylval.ival = atoi(yytext); return T_INT; }
 \n					{ return T_NEWLINE; }
 
 %x // BINOP
+"?"		{ return T_EQU; }
 "+"		{ return T_ADD; }
 "-"		{ return T_SUB; }
 "*"		{ return T_MUL; }
 "/"		{ return T_DIV; }
-"~"		{ return T_DRF; }
-"?"		{ return T_EQU; }
 "<"		{ return T_SML; }
 ">"		{ return T_GRT; }
 "&"		{ return T_AND; }
-","		{ return T_SEQ; }
 "|"		{ return T_OR; }
 %x // UNOP
 "!"		{ return T_NOT; }
@@ -62,7 +61,7 @@
 %x // TYPE MODS
 "'"         { return T_PTR; }
 "const"     { return T_CONST; }
-[_a-zA-Z][_a-zA-Z0-9]* { yylval.str = yytext; return T_ID; }
+[_a-zA-Z][_a-zA-Z0-9]* { yylval.str = strdup(yytext); return T_ID; }
 
-<<EOF>>		{   return T_EOF;    }
+<<EOF>>		{ return T_EOF; }
 .			{ return T_UNKNOWN; }

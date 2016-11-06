@@ -14,3 +14,5 @@
 #include "type_node.h"
 #include "var_decl_node.h"
 #include "fun_decl.h"
+#include "fun_call_node.h"
+#include "return_node.h"

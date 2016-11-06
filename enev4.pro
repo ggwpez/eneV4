@@ -22,7 +22,9 @@ SOURCES += \
     src/ast/var_decl_node.c \
     src/ast/ident_node.c \
     src/ast/type_node.c \
-    src/ast/fun_decl.c
+    src/ast/fun_decl.c \
+    src/ast/fun_call_node.c \
+    src/ast/return_node.c
 
 TEMPLATE = app
 
@@ -65,4 +67,6 @@ HEADERS += \
     src/ast/var_decl_node.h \
     src/ast/ident_node.h \
     src/ast/type_node.h \
-    src/ast/fun_decl.h
+    src/ast/fun_decl.h \
+    src/ast/fun_call_node.h \
+    src/ast/return_node.h

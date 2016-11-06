@@ -13,10 +13,12 @@ ur_type_t* ur_type_new_ng(ur_type_mod_t mod, ident_node_t* id, ur_type_t* sub)
 	{
 		assert(id);
 		ret->id = id;
+		ret->sub = NULL;
 	}
 	else
 	{
 		assert(sub);
+		ret->id = NULL;
 		ret->sub = sub;
 	}
 

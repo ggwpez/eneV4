@@ -1,9 +1,9 @@
 #include "ident_node.h"
+#include "../defines.h"
 
 #include <stdio.h>
 #include <string.h>
 
-extern char* strdup(const char *s);		// this is POSIX, not standard C
 ast_ptr ident_new(char* str, bool should_copy)
 {
 	return new(ast, AST_IDENT, ident_new_ng(str, should_copy));

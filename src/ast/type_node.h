@@ -16,12 +16,8 @@ typedef struct ur_type
 {
 	ur_type_mod_t mod;
 
-	union
-	{
-		ident_node_t* id;
-		struct ur_type* sub;
-	};
-
+	ident_node_t* id;
+	struct ur_type* sub;
 } ur_type_t;
 ur_type_t* ur_type_new_ng(ur_type_mod_t mod, ident_node_t* id, ur_type_t* sub);
 void ur_type_del(ur_type_t* node);

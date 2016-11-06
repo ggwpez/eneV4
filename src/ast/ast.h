@@ -13,12 +13,14 @@ typedef enum ast_type
 
 	AST_PROGRAM,
 	AST_BLOCK,
+	AST_RETURN,
 
 	AST_IDENT,
 	AST_TYPE,
 
 	AST_VAR_DECL,
 	AST_FUN_DECL,
+	AST_FUN_CALL,
 
 	AST_IF,
 	AST_WHILE,
