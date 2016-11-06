@@ -8,5 +8,6 @@ typedef struct block_node
 } block_node_t;
 
 ast_ptr block_new();
+block_node_t* block_new_ng();
 void block_del(block_node_t* node);
 void block_print(block_node_t* node);

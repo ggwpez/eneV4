@@ -18,12 +18,12 @@ typedef struct ur_type
 
 	union
 	{
-		ast_ptr id;
+		ident_node_t* id;
 		struct ur_type* sub;
 	};
 
 } ur_type_t;
-ur_type_t* ur_type_new(ur_type_mod_t mod, ast_ptr id, ur_type_t* sub);
+ur_type_t* ur_type_new_ng(ur_type_mod_t mod, ident_node_t* id, ur_type_t* sub);
 void ur_type_del(ur_type_t* node);
 void ur_type_print(ur_type_t* node);
 
@@ -33,5 +33,6 @@ typedef struct type_node
 } type_node_t;
 
 ast_ptr type_new(ur_type_t* type);
+type_node_t* type_new_ng(ur_type_t* type);
 void type_del(type_node_t* node);
 void type_print(type_node_t* node);

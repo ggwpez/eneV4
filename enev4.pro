@@ -2,7 +2,7 @@ CONFIG += console
 CONFIG -= app_bundle
 
 LIBS += -lfl -ly
-QMAKE_CFLAGS += -std=c11 -Wall -Wextra -Wpedantic -DYYDEBUG=1 -DYYERROR_VERBOSE=1
+QMAKE_CFLAGS += -std=c11 -Wall -Wextra -Wpedantic -DYYDEBUG=1 -DYYERROR_VERBOSE=1 -Wno-implicit-function-declaration
 
 FLEXSOURCES = src/lexer.l
 BISONSOURCES = src/parser.y
@@ -21,7 +21,8 @@ SOURCES += \
     src/ast/for_node.c \
     src/ast/var_decl_node.c \
     src/ast/ident_node.c \
-    src/ast/type_node.c
+    src/ast/type_node.c \
+    src/ast/fun_decl.c
 
 TEMPLATE = app
 
@@ -63,4 +64,5 @@ HEADERS += \
     src/ast/for_node.h \
     src/ast/var_decl_node.h \
     src/ast/ident_node.h \
-    src/ast/type_node.h
+    src/ast/type_node.h \
+    src/ast/fun_decl.h

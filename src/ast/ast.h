@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../defines.h"
+#include "../vector.h"
 
 struct ast_vector;
 
@@ -15,6 +16,9 @@ typedef enum ast_type
 
 	AST_IDENT,
 	AST_TYPE,
+
+	AST_VAR_DECL,
+	AST_FUN_DECL,
 
 	AST_IF,
 	AST_WHILE,
@@ -36,5 +40,5 @@ void ast_del(ast_ptr val);
 int ast_print(ast_ptr val);
 
 // START VECTOR
-
+MAKE_VECTOR_H(ast)
 // END VECTOR

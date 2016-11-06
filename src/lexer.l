@@ -57,10 +57,12 @@
 "goon"		{ return T_GOON; }
 "return"	{ return T_RETURN; }
 "struct"	{ return T_STRUCT; }
-"exit"	{ return T_QUIT; }
-"q"		{ return T_QUIT; }
+"exit"      { return T_QUIT; }
+"q"         { return T_QUIT; }
+%x // TYPE MODS
+"'"         { return T_PTR; }
+"const"     { return T_CONST; }
+[_a-zA-Z][_a-zA-Z0-9]* { yylval.str = yytext; return T_ID; }
 
-[_a-bA-B][_a-zA-Z0-9]* { yylval.str = yytext; return T_ID; }
-
-<<EOF>>			{   return T_EOF;    }
+<<EOF>>		{   return T_EOF;    }
 .			{ return T_UNKNOWN; }

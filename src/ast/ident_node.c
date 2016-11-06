@@ -3,7 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
-ast_ptr ident_new(char const* str, bool should_copy)
+extern char* strdup(const char *s);		// this is POSIX, not standard C
+ast_ptr ident_new(char* str, bool should_copy)
+{
+	return new(ast, AST_IDENT, ident_new_ng(str, should_copy));
+}
+
+ident_node_t* ident_new_ng(char* str, bool should_copy)
 {
 	assert(str);
 	define_ptr(ident_node_t, ret);
@@ -21,7 +27,7 @@ ast_ptr ident_new(char const* str, bool should_copy)
 		ret->have_to_free = false;
 	}
 
-	return new(ast, AST_IDENT, ret);
+	return ret;
 }
 
 void ident_del(ident_node_t* node)

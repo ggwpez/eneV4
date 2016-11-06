@@ -2,7 +2,7 @@
 #include <stdio.h>
 #undef mode
 
-ur_type_t* ur_type_new(ur_type_mod_t mod, ast_ptr id, ur_type_t* sub)
+ur_type_t* ur_type_new_ng(ur_type_mod_t mod, ident_node_t* id, ur_type_t* sub)
 {
 	assert(mod < UR_TYPE_MOD_size);
 	define_ptr(ur_type_t, ret);
@@ -52,19 +52,24 @@ void ur_type_print(ur_type_t* node)
 		ur_type_print(node->sub);
 	}
 	else
-		ast_print(node->id);
+		ident_print(node->id);
 
 	printf(")>");
 }
 
 ast_ptr type_new(ur_type_t* type)
 {
+	return new(ast, AST_TYPE, type_new_ng(type));
+}
+
+type_node_t* type_new_ng(ur_type_t* type)
+{
 	assert(type);
 	define_ptr(type_node_t, ret);
 
 	ret->type = type;
 
-	return new(ast, AST_TYPE, ret);
+	return ret;
 }
 
 void type_del(type_node_t* node)

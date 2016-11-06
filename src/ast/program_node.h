@@ -4,7 +4,7 @@
 
 typedef struct program_node
 {
-	struct ast_vector* v;
+	ast_vector_t* v;
 } program_node_t;
 
 ast_ptr program_new();

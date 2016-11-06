@@ -21,6 +21,12 @@ void crash(char const* msg)
 	int ival;
 	float fval;
 	char* str;
+	struct arg_node* f_arg;
+	struct arg_list_node* f_arg_list;
+	struct block_node* block;
+	struct ident_node* ident;
+	struct ur_type* ur_type;
+	struct type_node* type;
 	struct ast* node;
 	struct ast_vector* stack;
 }
@@ -29,67 +35,56 @@ void crash(char const* msg)
 %token<fval> T_FLOAT
 %token<str> T_ID
 %token T_ADD T_SUB T_MUL T_DIV T_DRF T_EQU T_SML T_GRT T_AND T_SEQ T_OR T_LEFT T_RIGHT
-%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI
+%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI T_PTR T_CONST
 %token T_NOT T_POP T_CPY
 %token T_WHILE T_FOR T_IF T_NSPACE T_ELSE T_BREAK T_GOON T_RETURN T_STRUCT
 %token T_NEWLINE T_QUIT T_UNKNOWN T_EOF
 
 %right T_SEQ
 
-%type<node>	program program_stmt
-%type<node> block block_content block_stmt
+%type<node>	program program_content program_stmt
+%type<block> block block_content
+%type<node> block_stmt
 %type<node> exp
 %type<stack> exp_stack
-%type<node> var_decl
+%type<f_arg> f_arg
+%type<f_arg_list> f_arg_list
+%type<node> var_decl fun_decl
 %type<node> term un_term bin_term
 %type<node> if_stmt while_stmt for_stmt
-%type<node> type
+%type<type> type
+%type<ur_type> type_part
 %type<node> atom
-%type<node>   ident
+%type<ident> ident
 %start program
 
 %%
 
-program: { $$ = NULL; } | program program_stmt
+program: program_content T_EOF { ast_print($$), puts(""); YYACCEPT; }
+
+program_content:  { $$ = new(program,); } | program_content program_stmt
 {
-	if ($1)
-	{
-		program_node_t* prog = assert_cast($1, program_node_t*, AST_PROGRAM);
+	program_node_t* prog = assert_cast($1, program_node_t*, AST_PROGRAM);
 
-		if ($2)
-			ast_vector_push_back(prog->v, $2);
+	if ($2)
+		ast_vector_push_back(prog->v, $2);
 
-		$$ = $1;
-	}
-	else
-	{
-		ast_ptr ret = new(program,);
-		program_node_t* prog = (program_node_t*)ret->node;		// this cast is assumed safe
-
-		if ($2)
-			ast_vector_push_back(prog->v, $2);
-
-		$$ = ret;
-		ast_print($$);
-		YYACCEPT;
-	}
+	$$ = $1;
 }
 
 program_stmt:
 			T_NEWLINE { $$ = NULL; }
-			| exp T_SEMI { $$ = $1; }
-			| if_stmt
-			| while_stmt
-			| for_stmt
-			| var_decl
+			| var_decl T_SEMI
+			| fun_decl
 
-block: T_SEMI { $$ = NULL; } | T_CBO block_content T_CBC { $$ = $2; }
+block: T_SEMI { $$ = new_ng(block,); }
+	 | T_CBO block_content T_CBC { $$ = $2; }
 
 block_content: { $$ = NULL; } | block_content block_stmt
 {
 	if ($1)
 	{
-		block_node_t* block = assert_cast($1, block_node_t*, AST_BLOCK);
+		block_node_t* block = $1;
 
 		if ($2)
 			ast_vector_push_back(block->v, $2);
@@ -98,13 +93,12 @@ block_content: { $$ = NULL; } | block_content block_stmt
 	}
 	else
 	{
-		ast_ptr ret = new(block,);
-		block_node_t* block = (block_node_t*)ret->node;		// this cast is assumed safe
+		block_node_t* block = new_ng(block,);
 
 		if ($2)
 			ast_vector_push_back(block->v, $2);
 
-		$$ = ret;
+		$$ = block;
 	}
 }
 
@@ -115,11 +109,21 @@ block_stmt:
 			| while_stmt
 			| for_stmt
 
-ident: T_ID			{ $$ = new(ident, $1, true); }
-type: ident			{ $$ = new(type, new(ur_type, UR_TYPE_MOD_ID, $1, NULL)); }
-var_decl: type ident T_SEMI { $$ = new(var_decl, $1, ); }
+ident: T_ID						{ $$ = new_ng(ident, $1, true); }
+type_part:
+		ident					{ $$ = new_ng(ur_type, UR_TYPE_MOD_ID, $1, NULL); }
+		| type_part T_PTR		{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1); }
+		| type_part T_CONST		{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1); }
+type: type_part					{ $$ = new_ng(type, $1); }
 
-if_stmt: T_IF T_BO exp T_BC block T_ELSE block	{ $$ = new(if, $3, $5, $7); }
+var_decl: type ident			{ $$ = new(var_decl, $1, $2); }
+
+f_arg: type ident { $$ = new_ng(arg, $1, $2); }
+f_arg_list: { $$ = new_ng(arg_list, new_ng(arg_vector, 0)); } | T_SEQ f_arg_list
+fun_decl: type ident T_BO f_arg_list T_BC block  { $$ = new(fun_decl, $1, $2, ); }
+
+if_stmt:
+		T_IF T_BO exp T_BC block T_ELSE block	{ $$ = new(if, $3, $5, $7); }
 	   | T_IF T_BO exp T_BC block				{ $$ = new(if, $3, $5, NULL); }
 
 while_stmt: T_WHILE T_BO exp T_BC block			{ $$ = new(while, $3, $5); }
@@ -199,7 +203,7 @@ exp_stack: { $$ = NULL; } | exp_stack term
 	}
 	else
 	{
-		ast_vector_t* ret = new(ast_vector, 5);
+		ast_vector_t* ret = new_ng(ast_vector, 5);
 
 		if ($2)
 			ast_vector_push_back(ret, $2);
@@ -214,7 +218,8 @@ term:
    | un_term
 
 atom:
-	T_INT					{ $$ = new(atom, ATOM_INT, &$1); }
+	T_ID					{ $$ = new(ident, $1, true); }
+	| T_INT					{ $$ = new(atom, ATOM_INT, &$1); }
 	| T_FLOAT				{ $$ = new(atom, ATOM_FLOAT, &$1); }
 
 un_term:
