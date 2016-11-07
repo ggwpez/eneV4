@@ -1,6 +1,14 @@
 #pragma once
 
-#include "boost/preprocessor.hpp"
+// Github thinks this is C++, but its pure C11
+#ifdef __cplusplus
+extern "C"
+{
+	#include "boost/preprocessor.hpp"
+}
+#else
+	#include "boost/preprocessor.hpp"
+#endif
 
 #include <stddef.h>
 #include <string.h>

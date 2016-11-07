@@ -12,7 +12,7 @@ block_node_t* block_new_ng()
 {
 	define_ptr(block_node_t, ret);
 
-	ret->v = new_ng(ast_vector, AST_VEC_START_SIZE);
+	ret->v = new_ng(ast_vector, VEC_START_SIZE);
 
 	return ret;
 }

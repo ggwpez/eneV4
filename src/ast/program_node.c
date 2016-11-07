@@ -7,7 +7,7 @@ ast_ptr program_new()
 {
 	define_ptr(program_node_t, ret);
 
-	ret->v = new_ng(ast_vector, AST_VEC_START_SIZE);
+	ret->v = new_ng(ast_vector, VEC_START_SIZE);
 
 	return new(ast, AST_PROGRAM, (void*)ret);
 }

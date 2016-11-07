@@ -1,5 +1,4 @@
-CONFIG += console
-CONFIG -= app_bundle
+CONFIG -= qt
 
 LIBS += -lfl -ly
 QMAKE_CFLAGS += -std=c11 -Wall -Wextra -Wpedantic -DYYDEBUG=1 -DYYERROR_VERBOSE=1 -Wno-implicit-function-declaration
@@ -24,7 +23,14 @@ SOURCES += \
     src/ast/type_node.c \
     src/ast/fun_decl.c \
     src/ast/fun_call_node.c \
+<<<<<<< HEAD \
     src/ast/return_node.c
+    src/mid_end/mid_end.c \
+    src/mid_end/scope.c \
+    src/mid_end/context.c
+=======
+    src/ast/return_node.c
+>>>>>>> 5cd23b9126ebbbd28e26fdf6ed9f4a696dbab97e
 
 TEMPLATE = app
 
@@ -69,4 +75,11 @@ HEADERS += \
     src/ast/type_node.h \
     src/ast/fun_decl.h \
     src/ast/fun_call_node.h \
+<<<<<<< HEAD \
     src/ast/return_node.h
+    src/mid_end/mid_end.h \
+    src/mid_end/scope.h \
+    src/mid_end/context.h
+=======
+    src/ast/return_node.h
+>>>>>>> 5cd23b9126ebbbd28e26fdf6ed9f4a696dbab97e

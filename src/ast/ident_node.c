@@ -48,3 +48,11 @@ void ident_print(ident_node_t* node)
 
 	printf("<ident(%s)>", node->str);
 }
+
+int ident_cmp_str(ident_node_t* node, ident_node_t* y)
+{
+	assert(node);
+	assert(y);
+
+	return strcmp(node->str, y->str);
+}

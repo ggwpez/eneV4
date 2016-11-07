@@ -1,5 +1,4 @@
-#ifndef DEFINES_H
-#define DEFINES_H
+#pragma once
 
 #include <stdlib.h>
 #include <assert.h>
@@ -10,6 +9,7 @@
 #ifdef delete
 	#undef delete
 #endif
+
 #define malloct(t) (t*)(malloc(sizeof(t)))
 #define define_ptr(t, name) t* name = malloct(t)
 #define new(t, ...) (t##_new(__VA_ARGS__))
@@ -18,7 +18,11 @@
 #define _countof(arr) (sizeof(arr) /sizeof(arr[0]))
 #define assert_cast(var, type, e) (assert(var), assert(var->node), assert(var->t == e), (type)var->node)
 
+<<<<<<< HEAD
+#define VEC_START_SIZE 1
+=======
 #define AST_VEC_START_SIZE 1
 extern char* strdup(const char *s);		// this is POSIX, not standard C
 
 #endif // DEFINES_H
+>>>>>>> 5cd23b9126ebbbd28e26fdf6ed9f4a696dbab97e
