@@ -7,44 +7,33 @@ struct ast_vector;
 
 typedef enum ast_type
 {
-    AST_ATOM,
-    AST_UNOP,
-    AST_BINOP,
+	AST_ATOM,
+	AST_UNOP,
+	AST_BINOP,
 
-<<<<<<< HEAD
-    AST_PROGRAM,
-    AST_BLOCK,
-=======
 	AST_PROGRAM,
 	AST_BLOCK,
 	AST_RETURN,
->>>>>>> 5cd23b9126ebbbd28e26fdf6ed9f4a696dbab97e
 
-    AST_IDENT,
-    AST_TYPE,
+	AST_IDENT,
+	AST_TYPE,
 
-<<<<<<< HEAD
-    AST_VAR_DECL,
-    AST_FUN_DECL,
-    AST_FUN_CALL,
-=======
 	AST_VAR_DECL,
 	AST_FUN_DECL,
 	AST_FUN_CALL,
->>>>>>> 5cd23b9126ebbbd28e26fdf6ed9f4a696dbab97e
 
-    AST_IF,
-    AST_WHILE,
-    AST_FOR,
+	AST_IF,
+	AST_WHILE,
+	AST_FOR,
 
-    AST_size
+	AST_size
 } ast_type_t;
 
 typedef struct ast
 {
-    ast_type_t t;
+	ast_type_t t;
 
-    void* node;
+	void* node;
 } ast_t;
 typedef ast_t* ast_ptr;
 
