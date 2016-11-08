@@ -1,7 +1,7 @@
 #include "r_type.h"
 #include <stdio.h>
 
-r_type_t* r_type_new(r_type_mode_t mod, inbuild_type_t* inbuild, r_type_t* sub)
+r_type_t* r_type_new(r_type_mod_t mod, inbuild_type_t* inbuild, r_type_t* sub)
 {
 	assert(mod < R_TYPE_MOD_size);
 	if (inbuild) assert(! sub);

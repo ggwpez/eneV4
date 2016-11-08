@@ -22,7 +22,8 @@ void type_del(type_node_t* node)
 	assert(node);
 
 	ur_type_del(node->ur_type);
-	r_type_del(node->r_type);
+	if (node->r_type)
+		r_type_del(node->r_type);
 }
 
 void type_print(type_node_t* node)
@@ -31,7 +32,7 @@ void type_print(type_node_t* node)
 
 	printf("<type_node(");
 		(node->r_type) ?
-			ur_type_print(node->ur_type):
-			r_type_print(node->r_type),
+			r_type_print(node->r_type):
+			ur_type_print(node->ur_type),
 	printf(")>");
 }

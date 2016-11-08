@@ -5,6 +5,9 @@
 #include "../vector.h"
 #include "context.h"
 
+/* This indicates whether idents are unique between function and variables */
+#define UNIQUE_IDENTS 1
+
 typedef struct scope
 {
 	context_vector_t* contexts;

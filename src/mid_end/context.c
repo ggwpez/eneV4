@@ -74,10 +74,11 @@ context_add_t context_add_fun(context_t* obj, fun_decl_node_t* elem)
 	assert(obj);
 	assert(elem);
 
-	if (context_get_fun(obj, elem->name))
+	// Already assumend checked by the scope
+	/*if (context_get_fun(obj, elem->name))
 		return CA_DOUBLE;
 	if (UNIQUE_IDENTS && context_get_var(obj, elem->name))
-		return CA_FUN_REG_AS_VAR;
+		return CA_FUN_REG_AS_VAR;*/
 
 	if (! fun_decl_vector_push_back(obj->funs, elem))
 		return CA_UNDERLYING;
@@ -90,10 +91,10 @@ context_add_t context_add_var(context_t* obj, var_decl_node_t* elem)
 	assert(obj);
 	assert(elem);
 
-	if (context_get_var(obj, elem->name))
+	/*if (context_get_var(obj, elem->name))
 		return CA_DOUBLE;
 	if (UNIQUE_IDENTS && context_get_fun(obj, elem->name))
-		return CA_VAR_REG_AS_FUN;
+		return CA_VAR_REG_AS_FUN;*/
 
 	if (! var_decl_vector_push_back(obj->vars, elem))
 		return CA_UNDERLYING;

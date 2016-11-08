@@ -29,7 +29,8 @@ SOURCES += \
     src/mid_end/context.c \
     src/mid_end/r_type.c \
     src/mid_end/inbuild_type.c \
-    src/mid_end/ur_type.c
+    src/mid_end/ur_type.c \
+    src/mid_end/scoper.c
 
 TEMPLATE = app
 
@@ -80,4 +81,5 @@ HEADERS += \
     src/mid_end/context.h \
     src/mid_end/r_type.h \
     src/mid_end/inbuild_type.hpp \
-    src/mid_end/ur_type.h
+    src/mid_end/ur_type.h \
+    src/mid_end/scoper.h

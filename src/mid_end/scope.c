@@ -84,6 +84,49 @@ var_decl_node_t* scope_get_var(scope_t* obj, ident_node_t* name)
 	return NULL;
 }
 
+static_assert((int)UR_TYPE_MOD_size == (int)R_TYPE_MOD_size, "(int)UR_TYPE_MOD_size == (int)R_TYPE_MOD_size");
+r_type_t* scope_resolve_ur_type(scope_t* obj, ur_type_t* type)
+{
+	assert(obj);
+	assert(type);
+	assert(type->mod < UR_TYPE_MOD_size);
+
+	if (type->mod == UR_TYPE_MOD_PTR|| type->mod == UR_TYPE_MOD_CONST)
+	{
+		r_type_t* new_sub = scope_resolve_ur_type(obj, type->sub);
+
+		if (! new_sub)
+			return NULL;
+
+		return r_type_new((r_type_mod_t)type->mod, NULL, new_sub);		// this cast is assumed safe
+	}
+	else //if (type->mod == UR_TYPE_MOD_ID)
+	{
+		inbuild_type_t* new_sub = inbuild_type_resolve(type->id);
+
+		if (! new_sub)
+			return NULL;
+
+		return r_type_new(R_TYPE_MOD_INBUILD, new_sub, NULL);
+	}
+	// Add here for struct types
+}
+
+int scope_resolve_type(scope_t* obj, type_node_t* node)
+{
+	assert(node);
+	assert(node->ur_type);
+	assert(! node->r_type);
+
+	r_type_t* new_res = scope_resolve_ur_type(obj, node->ur_type);
+
+	if (! new_res)
+		return -1;
+
+	node->r_type = new_res;
+	return 0;
+}
+
 context_add_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 {
 	assert(obj);
@@ -91,6 +134,12 @@ context_add_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 	size_t l = context_vector_size(obj->contexts);
 	assert(l);
 
+	if (scope_get_fun(obj, elem->name))
+		return CA_DOUBLE;
+	else if (UNIQUE_IDENTS && scope_get_var(obj, elem->name))
+		return CA_FUN_REG_AS_VAR;
+
+	scope_resolve_type(obj, elem->type);
 	context_t* cont	= context_vector_rat(obj->contexts, l -1);
 
 	return context_add_fun(cont, elem);
@@ -103,6 +152,12 @@ context_add_t scope_add_var(scope_t* obj, var_decl_node_t* elem)
 	size_t l = context_vector_size(obj->contexts);
 	assert(l);
 
+	if (scope_get_var(obj, elem->name))
+		return CA_DOUBLE;
+	else if (UNIQUE_IDENTS && scope_get_fun(obj, elem->name))
+		return CA_VAR_REG_AS_FUN;
+
+	scope_resolve_type(obj, elem->type);
 	context_t* cont	= context_vector_rat(obj->contexts, l -1);
 
 	return context_add_var(cont, elem);
