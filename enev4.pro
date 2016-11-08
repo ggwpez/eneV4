@@ -26,7 +26,10 @@ SOURCES += \
     src/ast/return_node.c \
     src/mid_end/mid_end.c \
     src/mid_end/scope.c \
-    src/mid_end/context.c
+    src/mid_end/context.c \
+    src/mid_end/r_type.c \
+    src/mid_end/inbuild_type.c \
+    src/mid_end/ur_type.c
 
 TEMPLATE = app
 
@@ -74,4 +77,7 @@ HEADERS += \
     src/ast/return_node.h \
     src/mid_end/mid_end.h \
     src/mid_end/scope.h \
-    src/mid_end/context.h
+    src/mid_end/context.h \
+    src/mid_end/r_type.h \
+    src/mid_end/inbuild_type.hpp \
+    src/mid_end/ur_type.h

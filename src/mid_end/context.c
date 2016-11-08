@@ -43,7 +43,7 @@ fun_decl_node_t* context_get_fun(context_t* obj, ident_node_t* name)
 	{
 		fun_decl_node_t* fun = fun_decl_vector_at(obj->funs, i);
 
-		if (! ident_cmp_str(fun->name, name))
+		if (! ident_cmp(fun->name, name))
 			return fun;
 	}
 
@@ -62,7 +62,7 @@ var_decl_node_t* context_get_var(context_t* obj, ident_node_t* name)
 	{
 		var_decl_node_t* var = var_decl_vector_at(obj->vars, i);
 
-		if (! ident_cmp_str(var->name, name))
+		if (! ident_cmp(var->name, name))
 			return var;
 	}
 

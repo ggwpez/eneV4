@@ -3,7 +3,7 @@
 scope_t* scope_new()
 {
 	define_ptr(scope_t, ret);
-	context_vector_t* contexts = new_ng(context_vector, 0);
+	context_vector_t* contexts = context_vector_new_ng(0);
 
 	ret->contexts = contexts;
 
@@ -13,8 +13,9 @@ scope_t* scope_new()
 void scope_del(scope_t* obj)
 {
 	assert(obj);
+	assert(! context_vector_size(obj->contexts));		// check whether all contexts are left
 
-	delete(context_vector, obj->contexts);
+	context_vector_del(obj->contexts);
 	free(obj);
 }
 
@@ -31,7 +32,7 @@ void scope_enter(scope_t* obj/*char const* namespace_name*/)
 {
 	assert(obj);
 
-	context_vector_push_back(obj->contexts, context_new(ast_vector_new_ng(0)));        // add new context
+	context_vector_push_back(obj->contexts, context_new());        // add new context
 }
 
 void scope_leave(scope_t* obj)
@@ -83,7 +84,7 @@ var_decl_node_t* scope_get_var(scope_t* obj, ident_node_t* name)
 	return NULL;
 }
 
-int scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
+context_add_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);
@@ -95,7 +96,7 @@ int scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 	return context_add_fun(cont, elem);
 }
 
-int scope_add_var(scope_t* obj, var_decl_node_t* elem)
+context_add_t scope_add_var(scope_t* obj, var_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);

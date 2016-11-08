@@ -17,6 +17,7 @@ typedef struct context
 {
 	fun_decl_vector_t* funs;
 	var_decl_vector_t* vars;
+
 } context_t;
 
 context_t* context_new(/*char const* namespace_name*/);

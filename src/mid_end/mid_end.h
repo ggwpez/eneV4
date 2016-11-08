@@ -5,7 +5,9 @@
 
 typedef enum me_error
 {
-	ME_ERROR_NONE = 0
+	MEE_NONE = 0,
+	MEE_SCOPE
 } me_error_t;
 
 me_error_t process(ast_ptr node);
+int process_scoping(program_node_t* node);

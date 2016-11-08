@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+extern char* strdup(char const*);
 ast_ptr ident_new(char* str, bool should_copy)
 {
 	return new(ast, AST_IDENT, ident_new_ng(str, should_copy));
@@ -49,10 +50,17 @@ void ident_print(ident_node_t* node)
 	printf("<ident(%s)>", node->str);
 }
 
-int ident_cmp_str(ident_node_t* node, ident_node_t* y)
+int ident_cmp(ident_node_t* node, ident_node_t* y)
 {
-	assert(node);
 	assert(y);
 
-	return strcmp(node->str, y->str);
+	return ident_cmp_str(node, y->str);
+}
+
+int ident_cmp_str(ident_node_t* node, char const* str)
+{
+	assert(node);
+	assert(str);
+
+	return strcmp(node->str, str);
 }
