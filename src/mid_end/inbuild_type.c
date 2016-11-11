@@ -6,8 +6,9 @@ inbuild_type_t inbuild_type_table[] =	{ { IT_U8, 8,0,0, "u8" }, { IT_U16, 16,0,0
 										  { IT_F32, 8,1,1, "f32" }, { IT_F64, 16,1,1, "f64" } };
 static_assert(_countof(inbuild_type_table) == IT_size, "inbuild_type_tr_table size wrong");
 
-inbuild_type_t* inbuild_type_resolve(ident_node_t* name)
+inbuild_type_t* inbuild_type_resolve_str(char const* name)
 {
+	assert(name);
 	size_t l = _countof(inbuild_type_table);
 
 	for (size_t i = 0; i < l; ++i)
@@ -17,6 +18,12 @@ inbuild_type_t* inbuild_type_resolve(ident_node_t* name)
 	}
 
 	return NULL;
+}
+
+inbuild_type_t* inbuild_type_resolve(ident_node_t* name)
+{
+	assert(name);
+	return inbuild_type_resolve_str(name->str);
 }
 
 void inbuild_type_del(inbuild_type_t* node)

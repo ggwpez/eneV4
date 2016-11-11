@@ -17,6 +17,7 @@ typedef enum ast_type
 
 	AST_IDENT,
 	AST_TYPE,
+	AST_TEXP,
 
 	AST_VAR_DECL,
 	AST_FUN_DECL,

@@ -17,5 +17,9 @@
 #define delete(t, var) (t##_del(var))
 #define _countof(arr) (sizeof(arr) /sizeof(arr[0]))
 #define assert_cast(var, type, e) (assert(var), assert(var->node), assert(var->t == e), (type)var->node)
+#define CHECK(v) { if (! (v)) return NULL; }
+#define CHECK_RET(v) { if ((v)) return v; }
+
+#define PANIC { fprintf(stderr, "Unreachable reached!"), exit(-1); }
 
 #define VEC_START_SIZE 1

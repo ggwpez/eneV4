@@ -20,7 +20,6 @@ SOURCES += \
     src/ast/for_node.c \
     src/ast/var_decl_node.c \
     src/ast/ident_node.c \
-    src/ast/type_node.c \
     src/ast/fun_decl.c \
     src/ast/fun_call_node.c \
     src/ast/return_node.c \
@@ -30,7 +29,9 @@ SOURCES += \
     src/mid_end/r_type.c \
     src/mid_end/inbuild_type.c \
     src/mid_end/ur_type.c \
-    src/mid_end/scoper.c
+    src/mid_end/scoper.c \
+    src/ast/texp_node.c \
+    src/ast/type_node.c
 
 TEMPLATE = app
 
@@ -72,7 +73,6 @@ HEADERS += \
     src/ast/for_node.h \
     src/ast/var_decl_node.h \
     src/ast/ident_node.h \
-    src/ast/type_node.h \
     src/ast/fun_decl.h \
     src/ast/fun_call_node.h \
     src/ast/return_node.h \
@@ -82,4 +82,6 @@ HEADERS += \
     src/mid_end/r_type.h \
     src/mid_end/inbuild_type.hpp \
     src/mid_end/ur_type.h \
-    src/mid_end/scoper.h
+    src/mid_end/scoper.h \
+    src/ast/texp_node.h \
+    src/ast/type_node.h

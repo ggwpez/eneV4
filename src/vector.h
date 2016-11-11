@@ -21,17 +21,22 @@ typedef struct BOOST_PP_CAT(t, _vector)\
 	BOOST_PP_CAT(t, _ptr*) data;\
 	BOOST_PP_CAT(t, _ptr*) ptr;\
 	size_t capacity;\
+	int locked;\
 } BOOST_PP_CAT(t, _vector_t);\
 \
 BOOST_PP_CAT(t, _vector_t*) BOOST_PP_CAT(t, _vector_new_ng)(size_t capacity);\
-void BOOST_PP_CAT(t, _vector_del)(BOOST_PP_CAT(t, _vector_t*) v);\
+int BOOST_PP_CAT(t, _vector_del)(BOOST_PP_CAT(t, _vector_t*) v);\
 BOOST_PP_CAT(t, _vector_t*) BOOST_PP_CAT(t, _vector_resize)(BOOST_PP_CAT(t, _vector_t*) v, size_t new_capacity);\
 size_t BOOST_PP_CAT(t, _vector_size)(BOOST_PP_CAT(t, _vector_t*) v);\
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_at)(BOOST_PP_CAT(t, _vector_t*) v, size_t i);\
+BOOST_PP_CAT(t, _ptr)* BOOST_PP_CAT(t, _vector_aat)(BOOST_PP_CAT(t, _vector_t*) v, size_t i);\
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_rat)(BOOST_PP_CAT(t, _vector_t*) v, size_t ri);\
+BOOST_PP_CAT(t, _ptr)* BOOST_PP_CAT(t, _vector_arat)(BOOST_PP_CAT(t, _vector_t*) v, size_t ri);\
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_push_back)(BOOST_PP_CAT(t, _vector_t*) v, BOOST_PP_CAT(t, _ptr) e);\
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_pop_back)(BOOST_PP_CAT(t, _vector_t*) v);\
-void BOOST_PP_CAT(t, _vector_print)(BOOST_PP_CAT(t, _vector_t*) v);
+void BOOST_PP_CAT(t, _vector_print)(BOOST_PP_CAT(t, _vector_t*) v);\
+void BOOST_PP_CAT(t, _vector_lock)(BOOST_PP_CAT(t, _vector_t*) v);\
+void BOOST_PP_CAT(t, _vector_unlock)(BOOST_PP_CAT(t, _vector_t*) v);
 
 
 #define MAKE_VECTOR_C(t)\
@@ -40,15 +45,17 @@ BOOST_PP_CAT(t, _vector_t*) BOOST_PP_CAT(t, _vector_new_ng)(size_t capacity)\
 {\
 	define_ptr(BOOST_PP_CAT(t, _vector_t), ret);\
 \
+	ret->locked = 0;\
 	memset(ret, 0, sizeof(BOOST_PP_CAT(t, _ptr)));\
 	BOOST_PP_CAT(t, _vector_resize)(ret, capacity);\
 \
 	return ret;\
 }\
 \
-void BOOST_PP_CAT(t, _vector_del)(BOOST_PP_CAT(t, _vector_t*) v)\
+int BOOST_PP_CAT(t, _vector_del)(BOOST_PP_CAT(t, _vector_t*) v)\
 {\
 	assert(v);\
+	if (v->locked) return -1;\
 \
 	for (size_t i = 0; i < BOOST_PP_CAT(t, _vector_size)(v); ++i)      /*TODO optimize*/\
 	{\
@@ -57,11 +64,13 @@ void BOOST_PP_CAT(t, _vector_del)(BOOST_PP_CAT(t, _vector_t*) v)\
 	}\
 \
 	free(v);\
+	return 0;\
 }\
 \
 BOOST_PP_CAT(t, _vector_t*) BOOST_PP_CAT(t, _vector_resize)(BOOST_PP_CAT(t, _vector_t*) v, size_t new_capacity)\
 {\
 	assert(v);\
+	if (v->locked) return NULL;\
 \
 	if (new_capacity)\
 	{\
@@ -105,16 +114,30 @@ size_t BOOST_PP_CAT(t, _vector_size)(BOOST_PP_CAT(t, _vector_t*) v)\
 \
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_at)(BOOST_PP_CAT(t, _vector_t*) v, size_t i)\
 {\
+	BOOST_PP_CAT(t, _ptr)* addr = BOOST_PP_CAT(t, _vector_aat)(v, i);\
+	if (! addr) return NULL;\
+\
+	return *addr;\
+}\
+BOOST_PP_CAT(t, _ptr)* BOOST_PP_CAT(t, _vector_aat)(BOOST_PP_CAT(t, _vector_t*) v, size_t i)\
+{\
 	assert(v);\
 	assert(v->data);\
 \
 	if (i >= BOOST_PP_CAT(t, _vector_size)(v))\
 		return NULL;\
 \
-	return v->data[i];\
+	return &v->data[i];\
 }\
 \
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_rat)(BOOST_PP_CAT(t, _vector_t*) v, size_t i)\
+{\
+	BOOST_PP_CAT(t, _ptr)* addr = BOOST_PP_CAT(t, _vector_arat)(v, i);\
+	if (! addr) return NULL;\
+\
+	return *addr;\
+}\
+BOOST_PP_CAT(t, _ptr)* BOOST_PP_CAT(t, _vector_arat)(BOOST_PP_CAT(t, _vector_t*) v, size_t i)\
 {\
 	assert(v);\
 	assert(v->data);\
@@ -123,13 +146,14 @@ BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_rat)(BOOST_PP_CAT(t, _vector_t*) v
 	if (!l || i >= l)\
 		return NULL;\
 \
-	return v->data[l -i -1];\
+	return &v->data[l -i -1];\
 }\
 \
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_push_back)(BOOST_PP_CAT(t, _vector_t*) v, BOOST_PP_CAT(t, _ptr) e)\
 {\
 	assert(v);\
 	assert(e);\
+	if (v->locked) return NULL;\
 \
 	size_t l = BOOST_PP_CAT(t, _vector_size)(v);\
 	if (l >= v->capacity)\
@@ -145,6 +169,7 @@ BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_pop_back)(BOOST_PP_CAT(t, _vector_
 {\
 	assert(v);\
 	assert(v->data);\
+	if (v->locked) return NULL;\
 \
 	if (!BOOST_PP_CAT(t, _vector_size)(v))		/* <=> (v->ptr == v->data)*/\
 		return NULL;\
@@ -164,4 +189,16 @@ void BOOST_PP_CAT(t, _vector_print)(BOOST_PP_CAT(t, _vector_t*) v)\
 	}\
 \
 	printf(")>");\
+}\
+\
+void BOOST_PP_CAT(t, _vector_lock)(BOOST_PP_CAT(t, _vector_t*) v)\
+{\
+	assert(v);\
+	v->locked = 1;\
+}\
+\
+void BOOST_PP_CAT(t, _vector_unlock)(BOOST_PP_CAT(t, _vector_t*) v)\
+{\
+	assert(v);\
+	v->locked = 0;\
 }

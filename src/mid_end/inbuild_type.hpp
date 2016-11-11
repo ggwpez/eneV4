@@ -42,4 +42,5 @@ void inbuild_type_print(inbuild_type_t* node);
 
 extern inbuild_type_t inbuild_type_table[];
 
+inbuild_type_t* inbuild_type_resolve_str(char const* name);
 inbuild_type_t* inbuild_type_resolve(ident_node_t* name);

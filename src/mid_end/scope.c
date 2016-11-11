@@ -112,7 +112,18 @@ r_type_t* scope_resolve_ur_type(scope_t* obj, ur_type_t* type)
 	// Add here for struct types
 }
 
-int scope_resolve_type(scope_t* obj, type_node_t* node)
+r_type_t* scope_resolve_inbuild_str(scope_t* obj, char const* name)
+{
+	assert(obj);
+	assert(name);
+
+	inbuild_type_t* it = inbuild_type_resolve_str(name);
+
+	if (! it) return NULL;
+	return new(r_type, R_TYPE_MOD_INBUILD, it, NULL);
+}
+
+int scope_transform_type(scope_t* obj, type_node_t* node)
 {
 	assert(node);
 	assert(node->ur_type);
@@ -139,7 +150,7 @@ context_add_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 	else if (UNIQUE_IDENTS && scope_get_var(obj, elem->name))
 		return CA_FUN_REG_AS_VAR;
 
-	scope_resolve_type(obj, elem->type);
+	scope_transform_type(obj, elem->type);
 	context_t* cont	= context_vector_rat(obj->contexts, l -1);
 
 	return context_add_fun(cont, elem);
@@ -157,7 +168,7 @@ context_add_t scope_add_var(scope_t* obj, var_decl_node_t* elem)
 	else if (UNIQUE_IDENTS && scope_get_fun(obj, elem->name))
 		return CA_VAR_REG_AS_FUN;
 
-	scope_resolve_type(obj, elem->type);
+	scope_transform_type(obj, elem->type);
 	context_t* cont	= context_vector_rat(obj->contexts, l -1);
 
 	return context_add_var(cont, elem);
