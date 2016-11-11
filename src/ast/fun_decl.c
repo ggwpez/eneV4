@@ -1,7 +1,7 @@
 #include "fun_decl.h"
 #include <stdio.h>
 
-arg_node_t* arg_new_ng(type_node_t* type, ident_node_t* name)
+/*arg_node_t* arg_new_ng(type_node_t* type, ident_node_t* name)
 {
     assert(type);
     assert(name);
@@ -59,9 +59,9 @@ void arg_list_print(arg_list_node_t* node)
     printf("<arg_list("),
         arg_vector_print(node->args),
     printf(")>");
-}
+}*/
 
-ast_ptr fun_decl_new(type_node_t* type, ident_node_t* name, block_node_t* code, arg_list_node_t* args)
+ast_ptr fun_decl_new(type_node_t* type, ident_node_t* name, block_node_t* code, var_decl_vector_t* args)
 {
     assert(type);
     assert(name);
@@ -84,7 +84,7 @@ void fun_decl_del(fun_decl_node_t* node)
     type_del(node->type);
     ident_del(node->name);
     block_del(node->code);
-    arg_list_del(node->args);
+    var_decl_vector_del(node->args);
 
     free(node);
 }
@@ -96,9 +96,7 @@ void fun_decl_print(fun_decl_node_t* node)
     printf("<fun_decl("),
         type_print(node->type), putchar(','),
         ident_print(node->name), putchar(','),
-        arg_list_print(node->args), putchar(','),
+        var_decl_vector_print(node->args), putchar(','),
         block_print(node->code),
     printf(")>");
 }
-
-MAKE_VECTOR_C(arg)

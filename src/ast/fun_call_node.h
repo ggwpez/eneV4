@@ -2,11 +2,14 @@
 
 #include "ast.h"
 #include "ident_node.h"
+#include "fun_decl.h"
 
 typedef struct fun_call_node
 {
     ident_node_t* name;
     ast_vector_t* args;
+    // Weak
+    fun_decl_node_t* decl;
 } fun_call_node_t;
 
 ast_ptr fun_call_new(ident_node_t* name, ast_vector_t* args);

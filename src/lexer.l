@@ -46,6 +46,7 @@ extern char* strdup(const char *s);		// this is POSIX, not standard C
 "{"		{ return T_CBO; }
 "}"		{ return T_CBC; }
 ";"		{ return T_SEMI; }
+","     { return T_SEQ; }
 %x // KEYWORD
 "while"		{ return T_WHILE; }
 "for"		{ return T_FOR; }

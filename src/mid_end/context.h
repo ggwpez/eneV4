@@ -5,16 +5,14 @@
 #include "../vector.h"
 
 typedef fun_decl_node_t* fun_decl_ptr;
-typedef var_decl_node_t* var_decl_ptr;
 
 MAKE_VECTOR_H(fun_decl)
-MAKE_VECTOR_H(var_decl)
 
 typedef struct context
 {
-	fun_decl_vector_t* funs;
-	var_decl_vector_t* vars;
-	// struct_decl_vector_t* structs;
+    fun_decl_vector_t* funs;
+    var_decl_vector_t* vars;
+    // struct_decl_vector_t* structs;
 } context_t;
 
 context_t* context_new(/*char const* namespace_name*/);
@@ -23,12 +21,12 @@ void context_print(context_t* obj);
 
 typedef enum context_add
 {
-	CA_SUCC = 0,
-	CA_DOUBLE,
-	CA_FUN_REG_AS_VAR,		// Function name already used as variable name
-	CA_VAR_REG_AS_FUN,		// vice versa
-	CA_TYPE_NOT_FOUND,
-	CA_UNDERLYING			// underlying error
+    CA_SUCC = 0,
+    CA_DOUBLE,
+    CA_FUN_REG_AS_VAR,		// Function name already used as variable name
+    CA_VAR_REG_AS_FUN,		// vice versa
+    CA_TYPE_NOT_FOUND,
+    CA_UNDERLYING			// underlying error
 } context_add_t;
 
 fun_decl_node_t* context_get_fun(context_t* obj, ident_node_t* name);

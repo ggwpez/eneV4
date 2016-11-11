@@ -1,7 +1,7 @@
 CONFIG -= qt
 
 LIBS += -lfl -ly
-QMAKE_CFLAGS += -std=c11 -Wall -Wextra -Wpedantic -DYYDEBUG=1 -DYYERROR_VERBOSE=1 -Wno-implicit-function-declaration
+QMAKE_CFLAGS += -std=c11 -Werror -Wall -Wextra -Wpedantic -DYYDEBUG=1 -DYYERROR_VERBOSE=1 -Wno-implicit-function-declaration
 
 FLEXSOURCES = src/lexer.l
 BISONSOURCES = src/parser.y
