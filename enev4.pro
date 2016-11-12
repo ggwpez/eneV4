@@ -35,8 +35,8 @@ SOURCES += \
 	src/mid_end/scoper.c \
 	src/ast/texp_node.c \
 	src/ast/type_node.c \
-    src/mid_end/trait.c \
-    src/mid_end/cast.c
+	src/mid_end/trait.c \
+	src/mid_end/cast.c
 
 TEMPLATE = app
 
@@ -90,5 +90,5 @@ HEADERS += \
 	src/mid_end/scoper.h \
 	src/ast/texp_node.h \
 	src/ast/type_node.h \
-    src/mid_end/trait.h \
-    src/mid_end/cast.h
+	src/mid_end/trait.h \
+	src/mid_end/cast.h
