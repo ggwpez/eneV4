@@ -23,7 +23,7 @@ ast_ptr ast_new(ast_type_t t, void* node)
 {
 	assert(node);
 	assert((int)t < AST_size);
-	ast_ptr ret = malloc(sizeof(ast_t));
+	ast_ptr ret = (ast_ptr)malloc(sizeof(ast_t));
 
 	ret->t = t;
 	ret->node = node;
@@ -67,5 +67,3 @@ int ast_print(ast_ptr val)
 	ast_prints[(int)val->t](val->node);
 	return 0;			// <- just that i can use it in ternary
 }
-
-MAKE_VECTOR_C(ast)

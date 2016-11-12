@@ -6,8 +6,8 @@
 
 typedef struct var_decl_node
 {
-    type_node_t* type;
-    ident_node_t* name;
+	type_node_t* type;
+	ident_node_t* name;
 } var_decl_node_t;
 
 typedef var_decl_node_t* var_decl_ptr;

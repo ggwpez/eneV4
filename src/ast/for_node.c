@@ -19,12 +19,9 @@ void for_del(for_node_t* node)
 {
 	assert(node);
 
-	if (node->init)
-		delete(ast, node->init);
-	if (node->cond)
-		delete(ast, node->cond);
-	if (node->inc)
-		delete(ast, node->inc);
+	delete(ast, node->init);
+	delete(ast, node->cond);
+	delete(ast, node->inc);
 	block_del(node->block);
 
 	free(node);

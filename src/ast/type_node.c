@@ -24,6 +24,7 @@ void type_del(type_node_t* node)
 	ur_type_del(node->ur_type);
 	if (node->r_type)
 		r_type_del(node->r_type);
+	free(node);
 }
 
 void type_print(type_node_t* node)

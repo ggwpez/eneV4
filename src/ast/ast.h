@@ -3,8 +3,6 @@
 #include "../defines.h"
 #include "../vector.h"
 
-struct ast_vector;
-
 typedef enum ast_type
 {
 	AST_ATOM,
@@ -36,12 +34,12 @@ typedef struct ast
 
 	void* node;
 } ast_t;
+
 typedef ast_t* ast_ptr;
+MAKE_VECTOR_H(ast)
 
 ast_ptr ast_new(ast_type_t t, void* node);
 void ast_del(ast_ptr val);
 int ast_print(ast_ptr val);
 
-// START VECTOR
-MAKE_VECTOR_H(ast)
-// END VECTOR
+

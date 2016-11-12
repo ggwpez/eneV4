@@ -17,6 +17,7 @@ typedef enum binop
 	BINOP_OR,
 	BINOP_size
 } binop_t;
+extern char const* binop_strings[];
 
 typedef struct binop_node
 {

@@ -11,7 +11,7 @@
 
 typedef struct scope
 {
-    context_vector_t* contexts;
+	context_vector_t* contexts;
 } scope_t;
 
 scope_t* scope_new();
@@ -28,6 +28,7 @@ context_add_t scope_add_var(scope_t* obj, var_decl_node_t* elem);
 context_add_t scope_add_vars(scope_t* obj, var_decl_vector_t* nodes);
 
 int scope_transform_type(scope_t* obj, type_node_t* node);
-int scope_transform_var_decls(scope_t* obj, var_decl_vector_t* nodes);
+int scope_transform_var(scope_t* obj, var_decl_node_t* node);
+int scope_transform_vars(scope_t* obj, var_decl_vector_t* nodes);
 r_type_t* scope_resolve_inbuild_str(scope_t* obj, char const* name);
 r_type_t* scope_resolve_ur_type(scope_t* obj, ur_type_t* type);

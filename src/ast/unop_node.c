@@ -16,8 +16,6 @@ void unop_del(unop_node_t* node)
 	assert(node);
 
 	delete(ast, node->node);
-	node->t = UNOP_size;
-
 	free(node);
 }
 

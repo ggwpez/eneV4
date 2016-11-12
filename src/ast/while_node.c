@@ -16,10 +16,8 @@ void while_del(while_node_t* node)
 {
 	assert(node);
 
-	if (node->cond)
-		delete(ast, node->cond);
-	if (node->true_node)
-		block_del(node->true_node);
+	delete(ast, node->cond);
+	block_del(node->true_node);
 
 	free(node);
 }

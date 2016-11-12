@@ -12,7 +12,8 @@
  * */
 typedef enum inbuild
 {
-	IT_U8  = 0,
+	IT_VOID,
+	IT_U8,
 	IT_U16,
 	IT_U32,
 	IT_U64,
