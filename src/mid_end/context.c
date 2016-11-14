@@ -69,26 +69,26 @@ var_decl_node_t* context_get_var(context_t* obj, ident_node_t* name)
 	return NULL;
 }
 
-context_add_t context_add_fun(context_t* obj, fun_decl_node_t* elem)
+error_t context_add_fun(context_t* obj, fun_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);
 	assert(elem->type->r_type);
 
 	if (! fun_decl_vector_push_back(obj->funs, elem))
-		return CA_UNDERLYING;
+		return CON_UNDERLYING;
 
-	return CA_SUCC;
+	return SUCCESS;
 }
 
-context_add_t context_add_var(context_t* obj, var_decl_node_t* elem)
+error_t context_add_var(context_t* obj, var_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);
 	assert(elem->type->r_type);
 
 	if (! var_decl_vector_push_back(obj->vars, elem))
-		return CA_UNDERLYING;
+		return CON_UNDERLYING;
 
-	return CA_SUCC;
+	return SUCCESS;
 }

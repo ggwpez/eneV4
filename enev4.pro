@@ -1,11 +1,10 @@
 CONFIG -= qt
 
-LIBS += -lfl -ly
-QMAKE_CC = clang
-QMAKE_CXX = clang++
-QMAKE_CFLAGS += -std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 -DYYMAXDEPTH=100000
+QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs`
 
-QMAKE_CFLAGS_WARN_ON += -Werror -Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration
+QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
+
+QMAKE_CFLAGS_WARN_ON +=-Werror -Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses
 FLEXSOURCES = src/lexer.l
 BISONSOURCES = src/parser.y
 
@@ -36,7 +35,9 @@ SOURCES += \
 	src/ast/texp_node.c \
 	src/ast/type_node.c \
 	src/mid_end/trait.c \
-	src/mid_end/cast.c
+	src/mid_end/cast.c \
+	src/back_end/back_end.c \
+	src/back_end/il.c
 
 TEMPLATE = app
 
@@ -91,4 +92,7 @@ HEADERS += \
 	src/ast/texp_node.h \
 	src/ast/type_node.h \
 	src/mid_end/trait.h \
-	src/mid_end/cast.h
+	src/mid_end/cast.h \
+	src/back_end/back_end.h \
+	src/errors.h \
+	src/back_end/il.h

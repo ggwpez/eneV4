@@ -11,6 +11,8 @@ typedef enum type_size
 
 type_size_t trait_sizeof(r_type_t* t);
 
+bool trait_is_castable_to(r_type_t* t1, r_type_t* t2);
+
 bool trait_is_arithmetic(r_type_t* t);
 bool trait_is_const(r_type_t* t);
 bool trait_is_ptr(r_type_t* t);

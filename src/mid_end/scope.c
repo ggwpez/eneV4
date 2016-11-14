@@ -123,7 +123,7 @@ r_type_t* scope_resolve_inbuild_str(scope_t* obj, char const* name)
 	return new(r_type, R_TYPE_MOD_INBUILD, it, NULL);
 }
 
-int scope_transform_type(scope_t* obj, type_node_t* node)
+error_t scope_transform_type(scope_t* obj, type_node_t* node)
 {
 	assert(node);
 	assert(node->ur_type);
@@ -132,22 +132,22 @@ int scope_transform_type(scope_t* obj, type_node_t* node)
 	r_type_t* new_res = scope_resolve_ur_type(obj, node->ur_type);
 
 	if (! new_res)
-		return -1;
+		return SC_TRANSFORM_TYPE;
 
 	node->r_type = new_res;
-	return 0;
+	return SUCCESS;
 }
 
-int scope_transform_var(scope_t* obj, var_decl_node_t* node)
+error_t scope_transform_var(scope_t* obj, var_decl_node_t* node)
 {
 	assert(obj);
 	assert(node);
 
-	CHECK_RET(scope_transform_type(obj, node->type));
-	return 0;
+	CHECK_ERR(scope_transform_type(obj, node->type));
+	return SUCCESS;
 }
 
-int scope_transform_vars(scope_t* obj, var_decl_vector_t* nodes)
+error_t scope_transform_vars(scope_t* obj, var_decl_vector_t* nodes)
 {
 	assert(nodes);
 
@@ -156,13 +156,13 @@ int scope_transform_vars(scope_t* obj, var_decl_vector_t* nodes)
 	for (size_t i = 0; i < s; ++i)
 	{
 		var_decl_node_t* node = var_decl_vector_at(nodes, i);
-		CHECK_RET(scope_transform_var(obj, node));
+		CHECK_ERR(scope_transform_var(obj, node));
 	}
 
-	return 0;
+	return SUCCESS;
 }
 
-context_add_t scope_add_vars(scope_t* obj, var_decl_vector_t* nodes)
+error_t scope_add_vars(scope_t* obj, var_decl_vector_t* nodes)
 {
 	assert(obj);
 	assert(nodes);
@@ -172,39 +172,38 @@ context_add_t scope_add_vars(scope_t* obj, var_decl_vector_t* nodes)
 	for (size_t i = 0; i < s; ++i)
 	{
 		var_decl_node_t* var = var_decl_vector_at(nodes, i);
-		context_add_t ret = scope_add_var(obj, var);
-		if (ret) return ret;
+		CHECK_ERR(scope_add_var(obj, var));
 	}
 
-	return CA_SUCC;
+	return SUCCESS;
 }
 
-context_add_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
+error_t scope_add_fun(scope_t* obj, fun_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);
 	assert(context_vector_size(obj->contexts));
 
 	if (scope_get_fun(obj, elem->name))
-		return CA_DOUBLE;
+		return CON_DOUBLE;
 	else if (UNIQUE_IDENTS && scope_get_var(obj, elem->name))
-		return CA_FUN_REG_AS_VAR;
+		return CON_FUN_REG_AS_VAR;
 
 	context_t* cont	= context_vector_rat(obj->contexts, 0);
 
 	return context_add_fun(cont, elem);
 }
 
-context_add_t scope_add_var(scope_t* obj, var_decl_node_t* elem)
+error_t scope_add_var(scope_t* obj, var_decl_node_t* elem)
 {
 	assert(obj);
 	assert(elem);
 	assert(context_vector_size(obj->contexts));
 
 	if (scope_get_var(obj, elem->name))
-		return CA_DOUBLE;
+		return CON_DOUBLE;
 	else if (UNIQUE_IDENTS && scope_get_fun(obj, elem->name))
-		return CA_VAR_REG_AS_FUN;
+		return CON_VAR_REG_AS_FUN;
 
 	context_t* cont	= context_vector_rat(obj->contexts, 0);
 

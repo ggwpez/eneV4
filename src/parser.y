@@ -3,6 +3,7 @@
 
 #include "src/ast/common.h"
 #include "src/mid_end/mid_end.h"
+#include "src/back_end/back_end.h"
 
 #include "y.tab.h"
 #include <stdio.h>
@@ -18,16 +19,17 @@ void crash(char const* msg)
 
 void done(ast_ptr prog)
 {
-	printf("Done:\n"),
-	ast_print(prog);
-
-	me_error_t ret = me_process(prog);
+	error_t ret = me_process(prog);
 
 	if (ret)
-		fprintf(stderr, "\n\n%s\n", "Error Scoping!");
+		fprintf(stderr, "\n\n%s\n", "Error!");
+
+	ret = be_process(prog, "asdf");
+
+	if (ret)
+		fprintf(stderr, "\n\n%s\n", "Error!");
 	else
-		printf("\n\n%s\n\n", "AST now:"),
-		ast_print(prog);
+		printf("Success");
 
 	delete(ast, prog);
 }

@@ -1,10 +1,8 @@
 #include "scoper.h"
+#include "cast.h"
+#include "trait.h"
 
-ast_transform_ptr_t ast_visits[] = { (ast_transform_ptr_t)scoper_transform_atom, (ast_transform_ptr_t)scoper_transform_unop, (ast_transform_ptr_t)scoper_transform_binop,
-						 (ast_transform_ptr_t)scoper_transform_program, (ast_transform_ptr_t)scoper_transform_block, (ast_transform_ptr_t)scoper_transform_return,
-						 (ast_transform_ptr_t)scoper_transform_ident, (ast_transform_ptr_t)scoper_transform_type, (ast_transform_ptr_t)scoper_transform_texp,
-						 (ast_transform_ptr_t)scoper_transform_var_decl, (ast_transform_ptr_t)scoper_transform_fun_decl, (ast_transform_ptr_t)scoper_transform_fun_call,
-						 (ast_transform_ptr_t)scoper_transform_if, (ast_transform_ptr_t)scoper_transform_while, (ast_transform_ptr_t)scoper_transform_for };
+MAKE_VTABLE_C(ast_visits, scoper_transform_, ast_transform_ptr_t)
 int ast_transformable[] = { 1, 1, 1,
 							0, 0, 0,
 							1, 0, 1,
@@ -13,7 +11,7 @@ int ast_transformable[] = { 1, 1, 1,
 
 static_assert(_countof(ast_visits       ) == AST_size, "_countof(ast_visits   ) == AST_size");
 static_assert(_countof(ast_transformable) == AST_size, "_countof(ast_transform) == AST_size");
-int scoper_process(scope_t* sc, ast_ptr* ast)
+error_t scoper_process(scope_t* sc, ast_ptr* ast)
 {
 	assert(ast);
 	bool got_sc = sc;
@@ -29,10 +27,10 @@ int scoper_process(scope_t* sc, ast_ptr* ast)
 	scope_leave(sc);
 	if (! got_sc)
 		scope_del(sc);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_ast(scope_t* sc, ast_ptr* ast)
+error_t scoper_transform_ast(scope_t* sc, ast_ptr* ast)
 {
 	assert(ast && *ast);
 	assert((*ast)->t < AST_size);
@@ -46,13 +44,10 @@ int scoper_transform_ast(scope_t* sc, ast_ptr* ast)
 	else
 		arg2 = (*ast)->node;
 
-	if (ast_visits[(int)(*ast)->t](sc, arg1, arg2))
-		return -1;
-
-	return 0;
+	return ast_visits[(*ast)->t](sc, arg1, arg2);
 }
 
-int scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node)
+error_t scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node)
 {
 	assert(ast && *ast);
 
@@ -63,40 +58,44 @@ int scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node)
 	else if (node->t == ATOM_INT)
 		nt = scope_resolve_inbuild_str(sc, "i32");
 	else
-		return -1;
+		return INTERNAL;
 
 	*ast = new(texp, *ast, nt);
 
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
+error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
 {
 	assert(ast && *ast);
 
-	CHECK_RET(scoper_transform_ast(sc, &node->node));
-
-	// for the first this always returns i32
-	r_type_t* nt = scope_resolve_inbuild_str(sc, "i32");
+	CHECK_ERR(scoper_transform_ast(sc, &node->node));
+	// TODO make unsigned to signed on negation
+	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
+	r_type_t* nt = r_type_cpy(x->type);
 
 	*ast = new(texp, *ast, nt);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
+error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 {
 	assert(ast && *ast);
 
-	CHECK_RET(scoper_transform_ast(sc, &node->x));
-	CHECK_RET(scoper_transform_ast(sc, &node->y));
+	CHECK_ERR(scoper_transform_ast(sc, &node->x));
+	CHECK_ERR(scoper_transform_ast(sc, &node->y));
 
-	r_type_t* nt = scope_resolve_inbuild_str(sc, "i32");
+	texp_node_t* x = assert_cast(node->x, texp_node_t*, AST_TEXP),
+			   * y = assert_cast(node->y, texp_node_t*, AST_TEXP);
+
+	// TODO look here
+	r_type_t* nt = cast_common_type(x->type, y->type, true);
 
 	*ast = new(texp, *ast, nt);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t *node)
+error_t scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t *node)
 {
 	(void)ast;
 	assert(node);
@@ -111,15 +110,15 @@ int scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t *node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr* obj = ast_vector_aat(node->v, i);
-		CHECK_RET(scoper_transform_ast(sc, obj));
+		CHECK_ERR(scoper_transform_ast(sc, obj));
 	}
 
 	ast_vector_unlock(node->v);
 	scope_leave(sc);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t *node)
+error_t scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t *node)
 {
 	(void)ast;
 	assert(node);
@@ -131,15 +130,15 @@ int scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t *node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr* obj = ast_vector_aat(node->v, i);
-		CHECK_RET(scoper_transform_ast(sc, obj));
+		CHECK_ERR(scoper_transform_ast(sc, obj));
 	}
 
 	ast_vector_unlock(node->v);
 	scope_leave(sc);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t *node)
+error_t scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t *node)
 {
 	(void)ast;
 	assert(node);
@@ -147,7 +146,7 @@ int scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t *node)
 	return scoper_transform_ast(sc, &node->exp);
 }
 
-int scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
+error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
 {
 	assert(ast && *ast);
 	r_type_t* nt = NULL;
@@ -159,51 +158,49 @@ int scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
 	assert(nt = r_type_cpy(decl->type->r_type));
 
 	*ast = new(texp, *ast, nt);
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_type(scope_t* sc, ast_ptr* ast, type_node_t *node)
+error_t scoper_transform_type(scope_t* sc, ast_ptr* ast, type_node_t *node)
 {
 	(void)sc, (void)ast, (void)node;
 	PANIC;
 }
 
-int scoper_transform_texp(scope_t* sc, ast_ptr* ast, texp_node_t *node)
+error_t scoper_transform_texp(scope_t* sc, ast_ptr* ast, texp_node_t *node)
 {
 	(void)sc, (void)ast, (void)node;
 	PANIC;
 }
 
-int scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t *node)
+error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t *node)
 {
 	(void)ast;
 	assert(node);
 
-	context_add_t ret = scope_add_var(sc, node);
+	CHECK_ERR(scope_add_var(sc, node));
 
-	if (ret)
-		return -1;
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *node)
+error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *node)
 {
 	(void)ast;
 	assert(node);
 
-	CHECK_RET(scope_transform_type(sc, node->type));					// transform type
-	CHECK_RET(scope_transform_vars(sc, node->args));					// transform args
-	CHECK_RET(scope_add_fun(sc, node));
+	CHECK_ERR(scope_transform_type(sc, node->type));					// transform type
+	CHECK_ERR(scope_transform_vars(sc, node->args));					// transform args
+	CHECK_ERR(scope_add_fun(sc, node));
 
 	scope_enter(sc);
-	CHECK_RET(scope_add_vars(sc, node->args));					// Add args
-	CHECK_RET(scoper_transform_block(sc, NULL, node->code));
+	CHECK_ERR(scope_add_vars(sc, node->args));					// Add args
+	CHECK_ERR(scoper_transform_block(sc, NULL, node->code));
 	scope_leave(sc);
 
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_fun_call(scope_t* sc, ast_ptr* ast, fun_call_node_t* node)
+error_t scoper_transform_fun_call(scope_t* sc, ast_ptr* ast, fun_call_node_t* node)
 {
 	assert(ast && *ast);
 
@@ -216,7 +213,7 @@ int scoper_transform_fun_call(scope_t* sc, ast_ptr* ast, fun_call_node_t* node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr* obj = ast_vector_aat(node->args, i);
-		CHECK_RET(scoper_transform_ast(sc, obj));
+		CHECK_ERR(scoper_transform_ast(sc, obj));
 	}
 
 	ast_vector_unlock(node->args);
@@ -224,10 +221,10 @@ int scoper_transform_fun_call(scope_t* sc, ast_ptr* ast, fun_call_node_t* node)
 	r_type_t* nt = r_type_cpy(node->decl->type->r_type);
 	*ast = new(texp, *ast, nt);
 
-	return 0;
+	return SUCCESS;
 }
 
-int scoper_transform_if(scope_t* sc, ast_ptr* ast, if_node_t *node)
+error_t scoper_transform_if(scope_t* sc, ast_ptr* ast, if_node_t *node)
 {
 	(void)ast;
 	assert(node);
@@ -235,39 +232,39 @@ int scoper_transform_if(scope_t* sc, ast_ptr* ast, if_node_t *node)
 	int ret;
 
 	ret = scoper_transform_ast(sc, &node->cond);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_block(sc, NULL, node->true_node);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_block(sc, NULL, node->else_node);
 
 	return ret;
 }
 
-int scoper_transform_while(scope_t* sc, ast_ptr* ast, while_node_t *node)
+error_t scoper_transform_while(scope_t* sc, ast_ptr* ast, while_node_t *node)
 {
 	(void)ast;
 	assert(node);
 	int ret;
 
 	ret = scoper_transform_ast(sc, &node->cond);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_block(sc, NULL, node->true_node);
 
 	return ret;
 }
 
-int scoper_transform_for(scope_t* sc, ast_ptr* ast, for_node_t *node)
+error_t scoper_transform_for(scope_t* sc, ast_ptr* ast, for_node_t *node)
 {
 	(void)ast;
 	assert(node);
 	int ret;
 
 	ret = scoper_transform_ast(sc, &node->init);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_ast(sc, &node->cond);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_ast(sc, &node->inc);
-	CHECK_RET(ret);
+	CHECK_ERR(ret);
 	ret = scoper_transform_block(sc, NULL, node->block);
 
 	return ret;

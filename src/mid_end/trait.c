@@ -18,6 +18,11 @@ type_size_t trait_sizeof(r_type_t* t)
 		PANIC;
 }
 
+/*bool trait_is_castable_to(r_type_t* t1, r_type_t* t2)
+{
+	return true;
+}*/
+
 bool trait_is_arithmetic(r_type_t* t)
 {
 	return trait_is_ptr(t) || trait_is_integral(t) || trait_is_floating(t);
