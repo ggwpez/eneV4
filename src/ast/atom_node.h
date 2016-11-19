@@ -5,8 +5,16 @@
 
 typedef enum value
 {
-	ATOM_INT,
+	ATOM_SINT8,
+	ATOM_SINT16,
+	ATOM_SINT32,
+	ATOM_SINT64,
+	ATOM_UINT8,
+	ATOM_UINT16,
+	ATOM_UINT32,
+	ATOM_UINT64,
 	ATOM_FLOAT,
+	ATOM_DOUBLE,
 	ATOM_REF_TO_RES,			// a reference to the value on below in the stack
 	ATOM_size
 } atom_t;
@@ -17,9 +25,18 @@ typedef struct atom_node
 
 	union
 	{
-		int v0;
-		float v1;
-		ast_ptr v2;
+		uint8_t  u8;
+		uint16_t u16;
+		uint32_t u32;
+		uint64_t u64;
+
+		int8_t  s8;
+		int16_t s16;
+		int32_t s32;
+		int64_t s64;
+
+		float f32;
+		double f64;
 	};
 } atom_node_t;
 

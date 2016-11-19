@@ -1,20 +1,18 @@
-#include "ast/ast.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int yylex();
-extern int yyparse();
-extern FILE* yyin;
-void yyerror(char const* s);
+#include "compiler.h"
 
-int main()
+int main(int argc, char** argv)
 {
-	yyin = stdin;
-
-	if (yyparse())
-		fprintf(stderr, "\nParsing failed\n");
+	if (argc == 3)
+		compile_file(argv[1], argv[2]);
+	else if (argc == 2)
+		compile_file(argv[1], NULL);
+	else if (argc == 1)
+		compile_file(NULL, NULL);
 	else
-		printf("\nParsing succeeded\n");
+		fprintf(stderr, "%s", "Usage:\nene input.ene output.llvm");
 
 	return 0;
 }

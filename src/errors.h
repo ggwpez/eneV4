@@ -7,6 +7,7 @@ typedef enum error
 	UNDERLYING,
 	UNKNOWN,
 	BAD_ARGS,				// call args are bad
+	FILE_NOT_FOUND,
 
 	CON_DOUBLE,
 	CON_FUN_REG_AS_VAR,		// Function name already used as variable name
@@ -15,8 +16,10 @@ typedef enum error
 	CON_UNDERLYING,			// underlying error
 
 	SC_TRANSFORM_TYPE,
+	SC_BAD_TYPE_CAST,
 
 	ME_SCOPER,
+	ME_BAD_TYPE_CAST,
 
 	BE_BAD_FILE,			// bad file stream
 } error_t;

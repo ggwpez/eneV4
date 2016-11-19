@@ -19,8 +19,10 @@ extern char* strdup(const char *s);		// this is POSIX, not standard C
 %%
 
 [ \t\n]	; // ignore all whitespace
+[0-9]+\.[0-9]+"d"	{ yylval.dval = atof(yytext); return T_DOUBLE; }
 [0-9]+\.[0-9]+		{ yylval.fval = atof(yytext); return T_FLOAT; }
-[0-9]+				{ yylval.ival = atoi(yytext); return T_INT; }
+"-"[0-9]+			{ yylval.ival = atoi(yytext); return T_SINT; }
+[0-9]+				{ yylval.uval = atoi(yytext); return T_UINT; }
 \n					{ return T_NEWLINE; }
 
 %x // BINOP

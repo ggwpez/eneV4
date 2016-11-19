@@ -1,6 +1,7 @@
 #include "scoper.h"
 #include "cast.h"
 #include "trait.h"
+#include <limits.h>
 
 MAKE_VTABLE_C(ast_visits, scoper_transform_, ast_transform_ptr_t)
 int ast_transformable[] = { 1, 1, 1,
@@ -11,7 +12,10 @@ int ast_transformable[] = { 1, 1, 1,
 
 static_assert(_countof(ast_visits       ) == AST_size, "_countof(ast_visits   ) == AST_size");
 static_assert(_countof(ast_transformable) == AST_size, "_countof(ast_transform) == AST_size");
-error_t scoper_process(scope_t* sc, ast_ptr* ast)
+
+static r_type_t* f_ret_type = NULL;
+
+error_t scoper_process(scope_t* sc, program_node_t* ast)
 {
 	assert(ast);
 	bool got_sc = sc;
@@ -20,9 +24,7 @@ error_t scoper_process(scope_t* sc, ast_ptr* ast)
 		sc = scope_new();
 	scope_enter(sc);
 
-	int ret = scoper_transform_ast(sc, ast);
-	if (ret)
-		return -1;		// TODO dont leak scope
+	CHECK_ERR(scoper_transform_program(sc, NULL, ast));
 
 	scope_leave(sc);
 	if (! got_sc)
@@ -53,12 +55,46 @@ error_t scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node)
 
 	r_type_t* nt = NULL;
 
-	if (node->t == ATOM_FLOAT)
-		nt = scope_resolve_inbuild_str(sc, "f32");
-	else if (node->t == ATOM_INT)
-		nt = scope_resolve_inbuild_str(sc, "i32");
-	else
-		return INTERNAL;
+	switch (node->t)
+	{
+		case ATOM_UINT8:
+			nt = scope_resolve_inbuild_str(sc, "u8");
+			break;
+		case ATOM_UINT16:
+			nt = scope_resolve_inbuild_str(sc, "u16");
+			break;
+		case ATOM_UINT32:
+			nt = scope_resolve_inbuild_str(sc, "u32");
+			break;
+		case ATOM_UINT64:
+			nt = scope_resolve_inbuild_str(sc, "u64");
+			break;
+
+		case ATOM_SINT8:
+			nt = scope_resolve_inbuild_str(sc, "i8");
+			break;
+		case ATOM_SINT16:
+			nt = scope_resolve_inbuild_str(sc, "i16");
+			break;
+		case ATOM_SINT32:
+			nt = scope_resolve_inbuild_str(sc, "i32");
+			break;
+		case ATOM_SINT64:
+			nt = scope_resolve_inbuild_str(sc, "i64");
+			break;
+
+		case ATOM_FLOAT:
+			nt = scope_resolve_inbuild_str(sc, "f32");
+			break;
+		case ATOM_DOUBLE:
+			nt = scope_resolve_inbuild_str(sc, "f64");
+			break;
+
+		case ATOM_REF_TO_RES:
+			break;
+		default:
+			PANIC;
+	}
 
 	*ast = new(texp, *ast, nt);
 
@@ -78,6 +114,62 @@ error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
 	return SUCCESS;
 }
 
+error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2)
+{
+	assert(t2);
+	assert(node);
+	assert(parent);
+	r_type_t* t1 = node->type;
+	texp_cast_t cast_type = CAST_size;
+	assert(!trait_is_ptr(t1) && !trait_is_ptr(t2)/* Unsupported */);
+
+	if (trait_is_same(t1, t2))
+		return SUCCESS;
+	if (! trait_is_castable_to(t1, t2))
+		return SC_BAD_TYPE_CAST;
+
+	size_t s1 = trait_sizeof(t1),
+		   s2 = trait_sizeof(t2);
+	bool sig1 = trait_is_signed(t1),
+		 sig2 = trait_is_signed(t2);
+
+	if (trait_is_integral(t1))
+	{
+		if (trait_is_integral(t2))		// int -> int
+		{
+			if (s2 > s1)				// int32 -> int64
+				cast_type = sig1 ? CAST_S_EXT : CAST_Z_EXT;
+			else if (s2 < s1)			// int64 -> int32
+				cast_type = CAST_TRUNC;
+		}
+		else if (trait_is_floating(t2))	// int -> float
+			cast_type = sig1 ? CAST_SI_TO_FP : CAST_UI_TO_FP;
+	}
+	else if (trait_is_floating(t1))
+	{
+		if (trait_is_floating(t2))		// float -> float
+		{
+			if (s2 > s1)				// float -> double
+				cast_type = CAST_FP_EXT;
+			else if (s2 < s1)			// double -> float
+				cast_type = CAST_FP_TRUNC;
+		}
+		else if (trait_is_integral(t2))	// float -> int
+			cast_type = sig2 ? CAST_FP_TO_SI : CAST_FP_TO_UI;
+	}
+	else if (trait_is_void(t1))
+		return SC_BAD_TYPE_CAST;
+
+	if (cast_type == CAST_size)	// nothing to do - wait, this is impossible !
+		return INTERNAL;
+
+	texp_node_t* ret = new_ng(texp, *parent, r_type_cpy(t2));
+	ret->cast_type = cast_type;
+
+	*parent = new(ast, AST_TEXP, ret);
+	return SUCCESS;
+}
+
 error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 {
 	assert(ast && *ast);
@@ -91,11 +183,14 @@ error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 	// TODO look here
 	r_type_t* nt = cast_common_type(x->type, y->type, true);
 
+	CHECK_ERR(scoper_create_texp_cast(&node->x, x, nt));	// cast both to commont type
+	CHECK_ERR(scoper_create_texp_cast(&node->y, y, nt));
+
 	*ast = new(texp, *ast, nt);
 	return SUCCESS;
 }
 
-error_t scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t *node)
+error_t scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t* node)
 {
 	(void)ast;
 	assert(node);
@@ -118,7 +213,7 @@ error_t scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t *node
 	return SUCCESS;
 }
 
-error_t scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t *node)
+error_t scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t* node)
 {
 	(void)ast;
 	assert(node);
@@ -143,7 +238,14 @@ error_t scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t *node)
 	(void)ast;
 	assert(node);
 
-	return scoper_transform_ast(sc, &node->exp);
+	error_t ret = scoper_transform_ast(sc, &node->exp);
+	CHECK_ERR(ret);
+	texp_node_t* texp = assert_cast(node->exp, texp_node_t*, AST_TEXP);
+
+	if (f_ret_type)
+		CHECK_ERR(scoper_create_texp_cast(&node->exp, texp, f_ret_type));
+
+	return SUCCESS;
 }
 
 error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
@@ -194,6 +296,7 @@ error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *no
 
 	scope_enter(sc);
 	CHECK_ERR(scope_add_vars(sc, node->args));					// Add args
+	f_ret_type = node->type->r_type;
 	CHECK_ERR(scoper_transform_block(sc, NULL, node->code));
 	scope_leave(sc);
 

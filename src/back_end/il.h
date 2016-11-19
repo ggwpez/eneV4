@@ -6,24 +6,24 @@
 
 #include <llvm-c/Core.h>
 
-error_t il_process(ast_ptr node, const char* file_name);
+error_t il_process(program_node_t* node, const char* mod_name, char** output);
 
-error_t il_create_ast(LLVMModuleRef mod, LLVMBuilderRef build, ast_ptr ast);
-error_t il_create_atom(LLVMModuleRef mod, LLVMBuilderRef build, atom_node_t* node);
-error_t il_create_unop(LLVMModuleRef mod, LLVMBuilderRef build, unop_node_t* node);
-error_t il_create_binop(LLVMModuleRef mod, LLVMBuilderRef build, binop_node_t* node);
-error_t il_create_program(LLVMModuleRef mod, LLVMBuilderRef build, program_node_t* node);
-error_t il_create_block(LLVMModuleRef mod, LLVMBuilderRef build, block_node_t* node);
-error_t il_create_return(LLVMModuleRef mod, LLVMBuilderRef build, return_node_t* node);
-error_t il_create_ident(LLVMModuleRef mod, LLVMBuilderRef build, ident_node_t* node);
-error_t il_create_type(LLVMModuleRef mod, LLVMBuilderRef build, type_node_t* node);
-error_t il_create_texp(LLVMModuleRef mod, LLVMBuilderRef build, texp_node_t* node);
-error_t il_create_var_decl(LLVMModuleRef mod, LLVMBuilderRef build, var_decl_node_t* node);
-error_t il_create_fun_decl(LLVMModuleRef mod, LLVMBuilderRef build, fun_decl_node_t* node);
-error_t il_create_fun_call(LLVMModuleRef mod, LLVMBuilderRef build, fun_call_node_t* node);
-error_t il_create_if(LLVMModuleRef mod, LLVMBuilderRef build, if_node_t* node);
-error_t il_create_while(LLVMModuleRef mod, LLVMBuilderRef build, while_node_t* node);
-error_t il_create_for(LLVMModuleRef mod, LLVMBuilderRef build, for_node_t* node);
+void* il_create_ast(ast_ptr ast);
+LLVMValueRef il_create_atom(atom_node_t* node);
+LLVMValueRef il_create_unop(unop_node_t* node);
+LLVMValueRef il_create_binop(binop_node_t* node);
+LLVMModuleRef il_create_program(program_node_t* node);
+LLVMBasicBlockRef il_create_block(block_node_t* node);
+LLVMValueRef il_create_return(return_node_t* node);
+LLVMValueRef il_create_ident(ident_node_t* node);
+LLVMTypeRef il_create_type(type_node_t* node);
+LLVMValueRef il_create_texp(texp_node_t* node);
+LLVMValueRef il_create_var_decl(var_decl_node_t* node);
+LLVMValueRef il_create_fun_decl(fun_decl_node_t* node);
+LLVMValueRef il_create_fun_call(fun_call_node_t* node);
+LLVMValueRef il_create_if(if_node_t* node);
+LLVMValueRef il_create_while(while_node_t* node);
+LLVMValueRef il_create_for(for_node_t* node);
 
-typedef error_t(*il_creator_ptr_t)(LLVMModuleRef, LLVMBuilderRef, void*);
+typedef void*(*il_creator_ptr_t)(void*);
 MAKE_VTABLE_H(il_creates, il_create_, il_creator_ptr_t)

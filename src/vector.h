@@ -62,7 +62,11 @@ int BOOST_PP_CAT(t, _vector_free)(BOOST_PP_CAT(t, _vector_t)* v)\
 	if (v->locked) return -1;\
 	\
 	free(v->data);\
-	memset(v, 0, sizeof(BOOST_PP_CAT(t, _vector_t)));\
+	free(v);\
+	v->locked = 0;\
+	v->capacity = 0;\
+	v->ptr = NULL;\
+	v->data = NULL;\
 	return 0;\
 }\
 \
@@ -126,7 +130,9 @@ BOOST_PP_CAT(t, _vector_t)* BOOST_PP_CAT(t, _vector_resize)(BOOST_PP_CAT(t, _vec
 size_t BOOST_PP_CAT(t, _vector_size)(BOOST_PP_CAT(t, _vector_t)* v)\
 {\
 	assert(v);\
-	return !v->data ? 0 : (v->ptr -v->data);\
+	size_t s = !v->data ? 0 : (v->ptr -v->data);\
+	assert(s < 1000000);\
+	return s;\
 }\
 \
 BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vector_at)(BOOST_PP_CAT(t, _vector_t)* v, size_t i)\
@@ -224,9 +230,3 @@ void BOOST_PP_CAT(t, _vector_unlock)(BOOST_PP_CAT(t, _vector_t)* v)\
 	assert(v);\
 	v->locked = 0;\
 }
-
-
-
-
-
-

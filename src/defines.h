@@ -25,7 +25,6 @@
 
 #define VEC_START_SIZE 1
 
-
 #define MAKE_VTABLE_H(table_name, prefix, delegate_t)\
 extern delegate_t ast_visits[];
 

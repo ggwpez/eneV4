@@ -1,6 +1,6 @@
 #pragma once
 
-#include "inbuild_type.hpp"
+#include "inbuild_type.h"
 
 typedef enum r_type_mod
 {

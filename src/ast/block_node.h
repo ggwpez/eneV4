@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ast.h"
+#include "../mid_end/r_type.h"
 
 typedef struct block_node
 {

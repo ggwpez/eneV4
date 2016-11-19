@@ -37,7 +37,9 @@ SOURCES += \
 	src/mid_end/trait.c \
 	src/mid_end/cast.c \
 	src/back_end/back_end.c \
-	src/back_end/il.c
+	src/back_end/il.c \
+    src/back_end/cast_llvm.c \
+    src/compiler.c
 
 TEMPLATE = app
 
@@ -86,7 +88,6 @@ HEADERS += \
 	src/mid_end/scope.h \
 	src/mid_end/context.h \
 	src/mid_end/r_type.h \
-	src/mid_end/inbuild_type.hpp \
 	src/mid_end/ur_type.h \
 	src/mid_end/scoper.h \
 	src/ast/texp_node.h \
@@ -95,4 +96,7 @@ HEADERS += \
 	src/mid_end/cast.h \
 	src/back_end/back_end.h \
 	src/errors.h \
-	src/back_end/il.h
+	src/back_end/il.h \
+    src/back_end/cast_llvm.h \
+    src/mid_end/inbuild_type.h \
+    src/compiler.h

@@ -9,13 +9,27 @@ r_type_t* cast_common_type(r_type_t* t1, r_type_t* t2, bool make_cpy)
 	if (trait_is_incomplete(t1) || trait_is_incomplete(t2))
 		ret = NULL;
 	else if (trait_is_floating(t1) || trait_is_floating(t2))
-		ret = (trait_sizeof(t1) > trait_sizeof(t2)) ? t1 : t2;
+	{
+		if (trait_is_floating(t1) && trait_is_floating(t2))
+			ret = (trait_sizeof(t1) > trait_sizeof(t2)) ? t1 : t2;
+		else if (trait_is_floating(t2))
+			ret = t2;
+		else
+			ret = t1;
+	}
 	else if (trait_is_ptr(t1))
 		ret = t1;
 	else if (trait_is_ptr(t2))
 		ret = t2;
 	else if (trait_is_integral(t1) || trait_is_integral(t2))
-		ret = (trait_sizeof(t1) > trait_sizeof(t2)) ? t1 : t2;
+	{
+		if (trait_is_integral(t1) && trait_is_integral(t2))
+			ret = (trait_sizeof(t1) > trait_sizeof(t2)) ? t1 : t2;
+		else if (trait_is_integral(t2))
+			ret = t2;
+		else
+			ret = t1;
+	}
 	else
 		PANIC
 

@@ -5,11 +5,16 @@
 
 ast_ptr program_new()
 {
+	return new(ast, AST_PROGRAM, program_new_ng());
+}
+
+program_node_t* program_new_ng()
+{
 	define_ptr(program_node_t, ret);
 
 	ret->v = new_ng(ast_vector, VEC_START_SIZE);
 
-	return new(ast, AST_PROGRAM, (void*)ret);
+	return ret;
 }
 
 void program_del(program_node_t* node)

@@ -6,7 +6,7 @@
 ///
 /// \param sc Can be null, to indicate that it has its own scope
 ///
-error_t scoper_process(scope_t* sc, ast_ptr* ast);
+error_t scoper_process(scope_t* sc, program_node_t* ast);
 // Generic
 error_t scoper_transform_ast(scope_t* sc, ast_ptr* ast);
 error_t scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node);

@@ -14,6 +14,7 @@ texp_node_t* texp_new_ng(ast_ptr exp, r_type_t* type)
 
 	ret->exp = exp;
 	ret->type = type;
+	ret->cast_type = CAST_size;
 
 	return ret;
 }

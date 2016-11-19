@@ -2,8 +2,6 @@
 #define YYDEBUG 1
 
 #include "src/ast/common.h"
-#include "src/mid_end/mid_end.h"
-#include "src/back_end/back_end.h"
 
 #include "y.tab.h"
 #include <stdio.h>
@@ -17,29 +15,17 @@ void crash(char const* msg)
 	exit(0);
 }
 
-void done(ast_ptr prog)
-{
-	error_t ret = me_process(prog);
-
-	if (ret)
-		fprintf(stderr, "\n\n%s\n", "Error!");
-
-	ret = be_process(prog, "asdf");
-
-	if (ret)
-		fprintf(stderr, "\n\n%s\n", "Error!");
-	else
-		printf("Success");
-
-	delete(ast, prog);
-}
+extern program_node_t* prog;
 
 %}
 
 %union {
-	int ival;
+	int64_t ival;
+	u_int64_t uval;
 	float fval;
+	double dval;
 	char* str;
+	struct program_node* prog;
 	struct var_decl_node* var_decl;
 	struct var_decl_vector* var_decl_list;
 	struct block_node* block;
@@ -50,8 +36,10 @@ void done(ast_ptr prog)
 	struct ast_vector* ast_vector;
 }
 
-%token<ival> T_INT
+%token<ival> T_SINT
+%token<uval> T_UINT
 %token<fval> T_FLOAT
+%token<dval> T_DOUBLE
 %token<str> T_ID
 %token T_EQU T_NOT T_POP T_CPY T_DRF
 %token T_ADD T_SUB T_MUL T_DIV T_SML T_GRT T_AND T_OR
@@ -60,7 +48,8 @@ void done(ast_ptr prog)
 %token T_NEWLINE T_QUIT T_UNKNOWN T_EOF
 %right T_SEQ
 
-%type<node>	program program_content program_stmt
+%type<prog> program program_content
+%type<node>	program_stmt
 %type<block> block block_content
 %type<node> block_stmt
 %type<node> exp
@@ -89,12 +78,12 @@ void done(ast_ptr prog)
 %destructor { free($$); } <str>
 %%
 
-program: program_content T_EOF { done($1); YYACCEPT; }
+program: program_content T_EOF { prog = $1; YYACCEPT; }
 
-program_content: { $$ = new(program,); }
+program_content: { $$ = new_ng(program,); }
 | program_content program_stmt
 {
-	program_node_t* prog = assert_cast($1, program_node_t*, AST_PROGRAM);
+	program_node_t* prog = $1;
 
 	if ($2)
 		ast_vector_push_back(prog->v, $2);
@@ -120,7 +109,7 @@ block_content: { $$ = new_ng(block,); }
 
 block_stmt:
 		T_NEWLINE { $$ = NULL; }
-		| T_RETURN exp T_SEMI { $$ = $2; }
+		| T_RETURN exp T_SEMI { $$ = new(return, $2); }
 		| exp T_SEMI
 		| if_stmt
 		| while_stmt
@@ -274,8 +263,35 @@ term:
 
 atom:
 	T_ID					{ $$ = new(ident, $1, true); }
-	| T_INT					{ $$ = new(atom, ATOM_INT, &$1); }
+	| T_SINT
+{
+
+	if ($1 <= INT8_MAX && $1 >= INT8_MIN)
+		$$ = new(atom, ATOM_SINT8, &$1);
+	else if ($1 <= INT16_MAX && $1 >= INT16_MIN)
+		$$ = new(atom, ATOM_SINT16, &$1);
+	else if ($1 <= INT32_MAX && $1 >= INT32_MIN)
+		$$ = new(atom, ATOM_SINT32, &$1);
+	else if ($1 <= INT64_MAX && $1 >= INT64_MIN)
+		$$ = new(atom, ATOM_SINT64, &$1);
+	else
+		crash("Atom sint");
+}
+	| T_UINT
+{
+	if ($1 <= UINT8_MAX)
+		$$ = new(atom, ATOM_UINT8, &$1);
+	else if ($1 <= UINT16_MAX)
+		$$ = new(atom, ATOM_UINT16, &$1);
+	else if ($1 <= UINT32_MAX)
+		$$ = new(atom, ATOM_UINT32, &$1);
+	else if ($1 <= UINT64_MAX)
+		$$ = new(atom, ATOM_UINT64, &$1);
+	else
+		crash("Atom uint");
+}
 	| T_FLOAT				{ $$ = new(atom, ATOM_FLOAT, &$1); }
+	| T_DOUBLE				{ $$ = new(atom, ATOM_DOUBLE, &$1); }
 
 un_term:
 	T_NOT					{ $$ = new(unop, UNOP_NOT, NULL); }
