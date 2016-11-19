@@ -1,10 +1,10 @@
-CONFIG -= qt
+CONFIG -= qt -c++
 
 QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs`
 
 QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
 
-QMAKE_CFLAGS_WARN_ON +=-Werror -Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses
+QMAKE_CFLAGS_WARN_ON +=-Werror -Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses -Wno-date-time
 FLEXSOURCES = src/lexer.l
 BISONSOURCES = src/parser.y
 
@@ -38,8 +38,9 @@ SOURCES += \
 	src/mid_end/cast.c \
 	src/back_end/back_end.c \
 	src/back_end/il.c \
-    src/back_end/cast_llvm.c \
-    src/compiler.c
+	src/back_end/cast_llvm.c \
+	src/compiler.c \
+    src/back_end/il_optimizer.c
 
 TEMPLATE = app
 
@@ -97,6 +98,7 @@ HEADERS += \
 	src/back_end/back_end.h \
 	src/errors.h \
 	src/back_end/il.h \
-    src/back_end/cast_llvm.h \
-    src/mid_end/inbuild_type.h \
-    src/compiler.h
+	src/back_end/cast_llvm.h \
+	src/mid_end/inbuild_type.h \
+	src/compiler.h \
+    src/back_end/il_optimizer.h

@@ -60,7 +60,7 @@ int compile_file(char const* in_file, char const* out_file)
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Back End Error!"), -1;
 
-	program_del(prog);
+	delete(program, prog);
 	free(module_name);
 	return 0;
 }

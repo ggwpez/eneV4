@@ -21,7 +21,7 @@
 #define CHECK(v) { if (! (v)) return NULL; }
 #define CHECK_ERR(v) { error_t ret_val = (v); if (ret_val != SUCCESS) return ret_val; }
 
-#define PANIC { fprintf(stderr, "Unreachable reached!"), exit(-1); }
+#define PANIC { fprintf(stderr, "PANIC\n"), exit(-1); }
 
 #define VEC_START_SIZE 1
 

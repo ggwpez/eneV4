@@ -1,13 +1,13 @@
 #include "il.h"
 #include "cast_llvm.h"
 #include "../mid_end/trait.h"
+#include "il_optimizer.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Object.h>
 #include <llvm-c/Target.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Types.h>
-#include <llvm-c/BitWriter.h>
 #include <stdio.h>
 
 MAKE_VTABLE_C(il_creates, il_create_, il_creator_ptr_t)
@@ -26,18 +26,29 @@ error_t il_process(program_node_t* node, char const* mod_name, char** output)
 	con = LLVMGetModuleContext(mod);
 	build = LLVMCreateBuilderInContext(con);
 
+	if (! mod || ! con || ! build)
+		return UNDERLYING;
+
 	LLVMModuleRef prog = il_create_program(node);
 	if (! prog)
 		return UNKNOWN;
 
+	il_optimize(mod, 3);
+
 	char* error = NULL;
 	if (LLVMVerifyModule(mod, LLVMPrintMessageAction, &error))
+	{
+		LLVMDisposeMessage(error);
 		return UNDERLYING;
+	}
 	LLVMDisposeMessage(error);
 
 	*output = LLVMPrintModuleToString(mod);
 	if (! output)
 		return UNDERLYING;
+
+	LLVMDisposeBuilder(build);
+	LLVMDisposeModule(mod);
 
 	return SUCCESS;
 }
@@ -153,7 +164,8 @@ LLVMBasicBlockRef il_create_block(block_node_t* node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr inst = ast_vector_at(node->v, i);
-		if (! il_create_ast(inst))
+		LLVMValueRef llvm_inst = il_create_ast(inst);
+		if (! llvm_inst)
 			return NULL;
 	}
 
@@ -219,7 +231,8 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 	for (size_t	i = 0; i < args_s; ++i)
 	{
 		var_decl_node_t* var_decl = var_decl_vector_at(node->args, i);
-		assert(args_t[i] = il_create_type(var_decl->type));
+		if (! (args_t[i] = il_create_type(var_decl->type)))
+			return NULL;
 	}
 	ret_t = il_create_type(node->type);
 

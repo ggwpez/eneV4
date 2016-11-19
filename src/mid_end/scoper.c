@@ -121,7 +121,7 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 	assert(parent);
 	r_type_t* t1 = node->type;
 	texp_cast_t cast_type = CAST_size;
-	assert(!trait_is_ptr(t1) && !trait_is_ptr(t2)/* Unsupported */);
+	assert(!trait_is_ptr(t1) && !trait_is_ptr(t2)/* TODO Unsupported */);
 
 	if (trait_is_same(t1, t2))
 		return SUCCESS;

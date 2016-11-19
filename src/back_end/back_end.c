@@ -21,7 +21,7 @@ error_t write_to_file(char const* str, char const* out_file)
 	return SUCCESS;
 }
 
-error_t be_process(program_node_t* node, char const* mod_name, const char* file_name)
+error_t be_process(program_node_t* node, char const* mod_name, char const* file_name)
 {
 	if (! node || ! mod_name)
 		return BAD_ARGS;
