@@ -18,6 +18,7 @@ error_t scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t* node);
 error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t* node);
 error_t scoper_transform_type(scope_t* sc, ast_ptr* ast, type_node_t* node);
 error_t scoper_transform_texp(scope_t* sc, ast_ptr* ast, texp_node_t* node);
+error_t scoper_transform_cast(scope_t* sc, ast_ptr* ast, cast_node_t* node);
 error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t* node);
 error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t* node);
 error_t scoper_transform_fun_call(scope_t* sc, ast_ptr* ast, fun_call_node_t* node);

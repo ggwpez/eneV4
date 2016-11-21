@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern char* strdup(char const*);
 ast_ptr ident_new(char* str, bool should_free)
 {
 	return new(ast, AST_IDENT, ident_new_ng(str, should_free));

@@ -62,7 +62,8 @@ extern program_node_t* prog;
 %type<node> term un_term bin_term
 %type<node> if_stmt while_stmt for_stmt
 %type<type> type
-%type<ur_type> type_part
+%type<node> cast
+%type<ur_type> ur_type
 %type<node> atom
 %type<ident> ident
 %start program
@@ -111,6 +112,7 @@ block_stmt:
 		T_NEWLINE { $$ = NULL; }
 		| T_RETURN exp T_SEMI { $$ = new(return, $2); }
 		| exp T_SEMI
+		| var_decl T_SEMI
 		| if_stmt
 		| while_stmt
 		| for_stmt
@@ -118,12 +120,12 @@ block_stmt:
 ident:
 		T_ID						{ $$ = new_ng(ident, $1, true); }
 
-type_part:
+ur_type:
 		ident					{ $$ = new_ng(ur_type, UR_TYPE_MOD_ID, $1, NULL); }
-		| type_part T_PTR		{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1); }
-		| type_part T_CONST		{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1); }
+		| ur_type T_PTR			{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1); }
+		| ur_type T_CONST		{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1); }
 
-type: type_part					{ $$ = new_ng(type, $1); }
+type: ur_type					{ $$ = new_ng(type, $1); }
 
 var_decl: type ident			{ $$ = new(var_decl, $1, $2); }
 
@@ -213,7 +215,7 @@ exp_stack: term
 	{
 		binop_node_t* binop = assert_cast(op, binop_node_t*, AST_BINOP);
 
-		if (!l)
+		if (! l)
 			crash("Binary operator cant be applied to [void void] (stack empty)");
 		if (l < 2)
 			crash("Binary operator cant be applied to [...  void] (stack missing one operand)");
@@ -226,7 +228,7 @@ exp_stack: term
 	{
 		unop_node_t* unop = assert_cast(op, unop_node_t*, AST_UNOP);
 
-		if (!l)
+		if (! l)
 			crash("Unary operator cant be applied to [void] (stack empty)");
 
 		if (unop->t == UNOP_CPY)
@@ -251,6 +253,16 @@ exp_stack: term
 			ast_vector_push_back(stack, op);
 		}
 	}
+	else if (op->t == AST_CAST)
+	{
+		cast_node_t* cast = assert_cast(op, cast_node_t*, AST_CAST);
+
+		if (! l)
+			crash("A Type cast cant be applied to [void] (stack empty)");
+
+		cast->node = ast_vector_pop_back(stack);
+		ast_vector_push_back(stack, op);
+	}
 	else
 		ast_vector_push_back(stack, op);
 }
@@ -260,6 +272,7 @@ term:
    | atom
    | bin_term
    | un_term
+   | cast
 
 atom:
 	T_ID					{ $$ = new(ident, $1, true); }
@@ -292,6 +305,9 @@ atom:
 }
 	| T_FLOAT				{ $$ = new(atom, ATOM_FLOAT, &$1); }
 	| T_DOUBLE				{ $$ = new(atom, ATOM_DOUBLE, &$1); }
+
+cast:
+	T_EBO ur_type T_EBC		{ $$ = new(cast, NULL, $2); }
 
 un_term:
 	T_NOT					{ $$ = new(unop, UNOP_NOT, NULL); }

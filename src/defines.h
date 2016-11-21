@@ -32,6 +32,7 @@ extern delegate_t ast_visits[];
 \
 delegate_t table_name[] = {	(delegate_t)BOOST_PP_CAT(prefix, atom), (delegate_t)BOOST_PP_CAT(prefix, unop), (delegate_t)BOOST_PP_CAT(prefix, binop),\
 							(delegate_t)BOOST_PP_CAT(prefix, program), (delegate_t)BOOST_PP_CAT(prefix, block), (delegate_t)BOOST_PP_CAT(prefix, return),\
-							(delegate_t)BOOST_PP_CAT(prefix, ident), (delegate_t)BOOST_PP_CAT(prefix, type), (delegate_t)BOOST_PP_CAT(prefix, texp),\
+							(delegate_t)BOOST_PP_CAT(prefix, ident), (delegate_t)BOOST_PP_CAT(prefix, type), (delegate_t)BOOST_PP_CAT(prefix, texp), (delegate_t)BOOST_PP_CAT(prefix, cast),\
 							(delegate_t)BOOST_PP_CAT(prefix, var_decl), (delegate_t)BOOST_PP_CAT(prefix, fun_decl), (delegate_t)BOOST_PP_CAT(prefix, fun_call),\
-							(delegate_t)BOOST_PP_CAT(prefix, if), (delegate_t)BOOST_PP_CAT(prefix, while), (delegate_t)BOOST_PP_CAT(prefix, for) };
+							(delegate_t)BOOST_PP_CAT(prefix, if), (delegate_t)BOOST_PP_CAT(prefix, while), (delegate_t)BOOST_PP_CAT(prefix, for) };\
+static_assert(_countof(table_name) == AST_size, "Size of table wront does not match AST_size");

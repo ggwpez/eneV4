@@ -2,7 +2,6 @@
 
 %{
 #include <stdio.h>
-extern char* strdup(const char *s);		// this is POSIX, not standard C
 
 #define YY_DECL int yylex()
 

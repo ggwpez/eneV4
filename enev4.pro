@@ -1,6 +1,5 @@
-CONFIG -= qt -c++
-
-QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs`
+CONFIG -= qt c++
+QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs	passes`
 
 QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
 
@@ -40,7 +39,11 @@ SOURCES += \
 	src/back_end/il.c \
 	src/back_end/cast_llvm.c \
 	src/compiler.c \
-    src/back_end/il_optimizer.c
+	src/back_end/il_optimizer.c \
+	src/ast/cast_node.c \
+	src/back_end/var.c \
+	src/back_end/var_scope.c \
+	src/back_end/var_scope_entry.c
 
 TEMPLATE = app
 
@@ -101,4 +104,8 @@ HEADERS += \
 	src/back_end/cast_llvm.h \
 	src/mid_end/inbuild_type.h \
 	src/compiler.h \
-    src/back_end/il_optimizer.h
+	src/back_end/il_optimizer.h \
+	src/ast/cast_node.h \
+	src/back_end/var.h \
+	src/back_end/var_scope.h \
+	src/back_end/var_scope_entry.h

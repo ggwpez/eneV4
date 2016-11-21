@@ -52,7 +52,7 @@ bool trait_is_castable_to(r_type_t* t1, r_type_t* t2)
 	assert(t1);
 	assert(t2);
 
-	return !trait_is_ptr(t1) && !trait_is_ptr(t2);
+	return true;
 }
 
 bool trait_is_arithmetic(r_type_t* t)

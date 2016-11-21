@@ -50,11 +50,14 @@ int compile_file(char const* in_file, char const* out_file)
 
 	error_t ret;
 	char *module_name;
-	asprintf(&module_name, "%s-module", in_file ? in_file : "stdin");
+	if (! asprintf(&module_name, "%s-module", in_file ? in_file : "stdin"))
+		return -1;
 
 	ret = me_process(prog);
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Mid End Rrror"), -1;
+
+	program_print(prog);
 
 	ret = be_process(prog, module_name, out_file);
 	if (ret)

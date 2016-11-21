@@ -6,7 +6,7 @@
 MAKE_VTABLE_C(ast_visits, scoper_transform_, ast_transform_ptr_t)
 int ast_transformable[] = { 1, 1, 1,
 							0, 0, 0,
-							1, 0, 1,
+							1, 0, 1, 1,
 							0, 0, 1,
 							0, 0, 0 };
 
@@ -108,8 +108,21 @@ error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
 	CHECK_ERR(scoper_transform_ast(sc, &node->node));
 	// TODO make unsigned to signed on negation
 	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
-	r_type_t* nt = r_type_cpy(x->type);
+	r_type_t* nt = NULL;
 
+	switch (node->t)
+	{
+		case UNOP_DRF:
+			if (! trait_is_ptr(x->type))
+				return fprintf(stderr, "%s\n", "Operator: '~' can only be applied to trait_is_ptr(t1) for any t1"), SC_BAD_TYPE_CAST;
+			//nt = cast_drop_ptr(x->type, true);
+			nt = r_type_cpy(x->type);	// TODO llvm thinks this
+			break;
+		default:
+			nt = r_type_cpy(x->type);
+	}
+
+	assert(nt);
 	*ast = new(texp, *ast, nt);
 	return SUCCESS;
 }
@@ -121,12 +134,14 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 	assert(parent);
 	r_type_t* t1 = node->type;
 	texp_cast_t cast_type = CAST_size;
-	assert(!trait_is_ptr(t1) && !trait_is_ptr(t2)/* TODO Unsupported */);
 
 	if (trait_is_same(t1, t2))
 		return SUCCESS;
 	if (! trait_is_castable_to(t1, t2))
 		return SC_BAD_TYPE_CAST;
+
+	if (trait_is_ptr(t1) && trait_is_ptr(t2))	// does this require recursion?
+		return scoper_create_texp_cast(parent, node, t2->sub);
 
 	size_t s1 = trait_sizeof(t1),
 		   s2 = trait_sizeof(t2);
@@ -144,6 +159,10 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 		}
 		else if (trait_is_floating(t2))	// int -> float
 			cast_type = sig1 ? CAST_SI_TO_FP : CAST_UI_TO_FP;
+		else if (trait_is_ptr(t2))		// int -> int'
+			cast_type = CAST_INT_TO_PTR;
+		else
+			PANIC;
 	}
 	else if (trait_is_floating(t1))
 	{
@@ -156,9 +175,26 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 		}
 		else if (trait_is_integral(t2))	// float -> int
 			cast_type = sig2 ? CAST_FP_TO_SI : CAST_FP_TO_UI;
+		else if (trait_is_ptr(t2))		// float -> int'
+			return fprintf(stderr, "%s\n", "Cast from trait_is_floating(t1) to trait_is_integral(t2) is illegal for all t1, t2"), SC_BAD_TYPE_CAST;
+		else
+			PANIC;
+	}
+	else if (trait_is_ptr(t1))
+	{
+		if (trait_is_floating(t2))		// float -> float
+			return fprintf(stderr, "%s\n", "Cast from trait_is_ptr(t1) to trait_is_floating(t2) is illegal for all t1, t2"), SC_BAD_TYPE_CAST;
+		else if (trait_is_integral(t2))	// float -> int
+			cast_type = CAST_PTR_TO_INT;
+		else if (trait_is_ptr(t2))		// flaot -> int'
+			;
+		else
+			PANIC;
 	}
 	else if (trait_is_void(t1))
 		return SC_BAD_TYPE_CAST;
+	else
+		PANIC;
 
 	if (cast_type == CAST_size)	// nothing to do - wait, this is impossible !
 		return INTERNAL;
@@ -263,23 +299,43 @@ error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
 	return SUCCESS;
 }
 
-error_t scoper_transform_type(scope_t* sc, ast_ptr* ast, type_node_t *node)
+error_t scoper_transform_type(scope_t* sc, ast_ptr* ast, type_node_t* node)
 {
 	(void)sc, (void)ast, (void)node;
 	PANIC;
 }
 
-error_t scoper_transform_texp(scope_t* sc, ast_ptr* ast, texp_node_t *node)
+error_t scoper_transform_texp(scope_t* sc, ast_ptr* ast, texp_node_t* node)
 {
 	(void)sc, (void)ast, (void)node;
 	PANIC;
 }
 
-error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t *node)
+error_t scoper_transform_cast(scope_t* sc, ast_ptr* ast, cast_node_t* node)
+{
+	assert(sc && ast && *ast && node);
+
+	CHECK_ERR(scoper_transform_ast(sc, &node->node));
+
+	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
+	r_type_t* nt = scope_resolve_ur_type(sc, node->t);
+
+	if (! nt)
+		return SC_TRANSFORM_TYPE;
+
+	CHECK_ERR(scoper_create_texp_cast(&node->node, x, nt));	// TODO very ugly, also leaking node
+
+	*ast = node->node;
+	//*ast = new(texp, *ast, nt);
+	return SUCCESS;
+}
+
+error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t* node)
 {
 	(void)ast;
 	assert(node);
 
+	CHECK_ERR(scope_transform_type(sc, node->type));
 	CHECK_ERR(scope_add_var(sc, node));
 
 	return SUCCESS;

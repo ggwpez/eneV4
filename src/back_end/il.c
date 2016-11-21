@@ -102,6 +102,27 @@ LLVMValueRef il_create_unop(unop_node_t* node)
 {
 	assert(node);
 
+	r_type_t* t = trait_typeof(node->node);
+
+	LLVMValueRef ptr = il_create_ast(node->node);
+
+	if (! t || ! ptr)
+		return NULL;
+
+	switch (node->t)
+	{
+		case UNOP_DRF:
+			if (trait_is_ptr(t))
+			{
+				LLVMValueRef null = LLVMConstInt(LLVMInt32TypeInContext(con), 0, 0);
+				return LLVMBuildGEP(build, ptr, &null, 1, "Drf");
+			}
+			else
+				return fflush(stdout), fprintf(stderr, "%s", "Operator: '~' cant be applied to ["), r_type_print(t), fflush(stdout), NULL;
+		default:
+			return NULL;
+	}
+
 	return NULL;
 }
 
@@ -121,7 +142,7 @@ LLVMValueRef il_create_binop(binop_node_t* node)
 	else
 		y = il_create_ast(node->y);
 
-	if (!x || !y)
+	if (! t1 || ! t2 || ! x || ! y)
 		return NULL;
 
 	switch (node->t)
@@ -211,11 +232,20 @@ LLVMValueRef il_create_texp(texp_node_t* node)
 	}
 }
 
+LLVMValueRef il_create_cast(cast_node_t* node)
+{
+	assert(node);
+
+	return il_create_ast(node->node);
+}
+
 LLVMValueRef il_create_var_decl(var_decl_node_t* node)
 {
 	assert(node);
 
-	return NULL;
+	LLVMTypeRef type = il_create_type(node->type);
+
+	return LLVMBuildAlloca(build, type, node->name->str);
 }
 
 LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)

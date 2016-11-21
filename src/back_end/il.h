@@ -18,6 +18,7 @@ LLVMValueRef il_create_return(return_node_t* node);
 LLVMValueRef il_create_ident(ident_node_t* node);
 LLVMTypeRef il_create_type(type_node_t* node);
 LLVMValueRef il_create_texp(texp_node_t* node);
+LLVMValueRef il_create_cast(cast_node_t* node);
 LLVMValueRef il_create_var_decl(var_decl_node_t* node);
 LLVMValueRef il_create_fun_decl(fun_decl_node_t* node);
 LLVMValueRef il_create_fun_call(fun_call_node_t* node);
