@@ -92,14 +92,14 @@ bool trait_is_integral(r_type_t* t)
 {
 	assert(t);
 
-	return t->mod == R_TYPE_MOD_INBUILD && !t->inbuild->is_floating;
+	return trait_is_plain_inbuild(t) && (t->inbuild->type >= IT_U8 && t->inbuild->type <= IT_I64);
 }
 
 bool trait_is_floating(r_type_t* t)
 {
 	assert(t);
 
-	return t->mod == R_TYPE_MOD_INBUILD && t->inbuild->is_floating;
+	return trait_is_plain_inbuild(t) && t->inbuild->is_floating;
 }
 
 bool trait_is_signed(r_type_t* t)

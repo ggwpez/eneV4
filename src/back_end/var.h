@@ -12,6 +12,6 @@ typedef struct
 typedef var_t* var_ptr;
 MAKE_VECTOR_H(var)
 
-var_t* var_new_ng(const char* name, LLVMValueRef val);
+var_t* var_new(const char* name, LLVMValueRef val);
 void var_del(var_t* node);
 void var_print(var_t* node);

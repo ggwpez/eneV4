@@ -27,4 +27,3 @@ error_t scoper_transform_while(scope_t* sc, ast_ptr* ast, while_node_t* node);
 error_t scoper_transform_for(scope_t* sc, ast_ptr* ast, for_node_t* node);
 
 typedef error_t(*ast_transform_ptr_t)(scope_t*, ast_ptr*, void*);
-MAKE_VTABLE_H(ast_visits, scoper_transform_, ast_transform_ptr_t)

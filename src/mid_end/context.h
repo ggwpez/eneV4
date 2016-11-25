@@ -7,9 +7,9 @@
 
 typedef struct context
 {
-	fun_decl_vector_t* funs;
-	var_decl_vector_t* vars;
-	// struct_decl_vector_t* structs;
+	fun_decl_vec_t* funs;
+	var_decl_vec_t* vars;
+	// struct_decl_vec_t* structs;
 } context_t;
 
 typedef context_t* context_ptr;

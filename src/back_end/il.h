@@ -27,4 +27,3 @@ LLVMValueRef il_create_while(while_node_t* node);
 LLVMValueRef il_create_for(for_node_t* node);
 
 typedef void*(*il_creator_ptr_t)(void*);
-MAKE_VTABLE_H(il_creates, il_create_, il_creator_ptr_t)

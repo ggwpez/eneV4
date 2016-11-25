@@ -8,6 +8,8 @@ r_type_t* cast_common_type(r_type_t* t1, r_type_t* t2, bool make_cpy)
 	// TODO wont work with const
 	if (trait_is_incomplete(t1) || trait_is_incomplete(t2))
 		ret = NULL;
+	else if (trait_is_void(t1) || trait_is_void(t2))
+		ret = trait_is_void(t1) ? t1 : t2;
 	else if (trait_is_floating(t1) || trait_is_floating(t2))
 	{
 		if (trait_is_floating(t1) && trait_is_floating(t2))

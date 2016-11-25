@@ -2,6 +2,7 @@
 #include "cast_llvm.h"
 #include "../mid_end/trait.h"
 #include "il_optimizer.h"
+#include "var_scope.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Object.h>
@@ -15,6 +16,7 @@ MAKE_VTABLE_C(il_creates, il_create_, il_creator_ptr_t)
 static LLVMModuleRef mod = NULL;
 static LLVMContextRef con = NULL;
 static LLVMBuilderRef build = NULL;
+static var_scope_t* sc = NULL;			// scope
 
 error_t il_process(program_node_t* node, char const* mod_name, char** output)
 {
@@ -25,6 +27,7 @@ error_t il_process(program_node_t* node, char const* mod_name, char** output)
 	mod = LLVMModuleCreateWithName(mod_name);
 	con = LLVMGetModuleContext(mod);
 	build = LLVMCreateBuilderInContext(con);
+	sc = var_scope_new();
 
 	if (! mod || ! con || ! build)
 		return UNDERLYING;
@@ -47,6 +50,7 @@ error_t il_process(program_node_t* node, char const* mod_name, char** output)
 	if (! output)
 		return UNDERLYING;
 
+	var_scope_del(sc);
 	LLVMDisposeBuilder(build);
 	LLVMDisposeModule(mod);
 
@@ -115,7 +119,8 @@ LLVMValueRef il_create_unop(unop_node_t* node)
 			if (trait_is_ptr(t))
 			{
 				LLVMValueRef null = LLVMConstInt(LLVMInt32TypeInContext(con), 0, 0);
-				return LLVMBuildGEP(build, ptr, &null, 1, "Drf");
+				LLVMValueRef v_ptr = LLVMBuildGEP(build, ptr, &null, 1, "Load address for ~");
+				return LLVMBuildLoad(build, v_ptr, "");
 			}
 			else
 				return fflush(stdout), fprintf(stderr, "%s", "Operator: '~' cant be applied to ["), r_type_print(t), fflush(stdout), NULL;
@@ -166,13 +171,15 @@ LLVMModuleRef il_create_program(program_node_t* node)
 {
 	assert(node);
 
-	size_t s = ast_vector_size(node->v);
+	var_scope_enter(sc);
+	size_t s = ast_vec_size(node->v);
 	for (size_t i = 0; i < s; ++i)
 	{
-		ast_ptr inst = ast_vector_at(node->v, i);
+		ast_ptr inst = ast_vec_at(node->v, i);
 		if (! il_create_ast(inst))
 			return NULL;
 	}
+	var_scope_leave(sc);
 
 	return mod;
 }
@@ -181,14 +188,16 @@ LLVMBasicBlockRef il_create_block(block_node_t* node)
 {
 	assert(node);
 
-	size_t s = ast_vector_size(node->v);
+	var_scope_enter(sc);
+	size_t s = ast_vec_size(node->v);
 	for (size_t i = 0; i < s; ++i)
 	{
-		ast_ptr inst = ast_vector_at(node->v, i);
+		ast_ptr inst = ast_vec_at(node->v, i);
 		LLVMValueRef llvm_inst = il_create_ast(inst);
 		if (! llvm_inst)
 			return NULL;
 	}
+	var_scope_leave(sc);
 
 	return LLVMGetInsertBlock(build);
 }
@@ -207,7 +216,12 @@ LLVMValueRef il_create_ident(ident_node_t* node)
 {
 	assert(node);
 
-	return NULL;
+	var_t* var = var_scope_get(sc, node->str);
+	assert(var);											// cant happen, ensured by the scoper
+	LLVMValueRef val = var->val;
+	assert(val);											// "
+
+	return val;
 }
 
 LLVMTypeRef il_create_type(type_node_t* node)
@@ -227,9 +241,7 @@ LLVMValueRef il_create_texp(texp_node_t* node)
 	if (node->cast_type == CAST_size)
 		return val;
 	else
-	{
 		return LLVMBuildCast(build, (LLVMOpcode)node->cast_type, val, type, "texp_cast");
-	}
 }
 
 LLVMValueRef il_create_cast(cast_node_t* node)
@@ -244,8 +256,10 @@ LLVMValueRef il_create_var_decl(var_decl_node_t* node)
 	assert(node);
 
 	LLVMTypeRef type = il_create_type(node->type);
+	LLVMValueRef alloc = LLVMBuildAlloca(build, type, node->name->str);
 
-	return LLVMBuildAlloca(build, type, node->name->str);
+	var_scope_add(sc, var_new(node->name->str, alloc));
+	return alloc;
 }
 
 LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
@@ -254,13 +268,13 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 	LLVMContextRef con = LLVMGetModuleContext(mod);
 
 	// HEAD
-	size_t args_s = var_decl_vector_size(node->args);
+	size_t args_s = var_decl_vec_size(node->args);
 	LLVMTypeRef* args_t = malloc(sizeof(LLVMTypeRef) *args_s);
 	LLVMTypeRef ret_t;
 
 	for (size_t	i = 0; i < args_s; ++i)
 	{
-		var_decl_node_t* var_decl = var_decl_vector_at(node->args, i);
+		var_decl_node_t* var_decl = var_decl_vec_at(node->args, i);
 		if (! (args_t[i] = il_create_type(var_decl->type)))
 			return NULL;
 	}
@@ -273,7 +287,7 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 	for	(size_t i = 0; i < args_s; ++i)
 	{
 		LLVMValueRef arg = LLVMGetParam(fun, i);
-		var_decl_node_t* arg_decl = var_decl_vector_at(node->args, i);
+		var_decl_node_t* arg_decl = var_decl_vec_at(node->args, i);
 		char const* arg_name = arg_decl->name->str;
 
 		LLVMSetValueName(arg, arg_name);

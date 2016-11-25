@@ -1,5 +1,5 @@
 CONFIG -= qt c++
-QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs	passes`
+QMAKE_LIBS +=-lfl -ly -rdynamic `llvm-config --system-libs --libs	passes`
 
 QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
 

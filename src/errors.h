@@ -16,7 +16,9 @@ typedef enum error
 	CON_UNDERLYING,			// underlying error
 
 	SC_TRANSFORM_TYPE,
+	SC_OVERLOAD_FAULT,
 	SC_BAD_TYPE_CAST,
+	SC_VAR_NOT_FOUND,
 
 	ME_SCOPER,
 	ME_BAD_TYPE_CAST,

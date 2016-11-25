@@ -4,7 +4,7 @@
 
 typedef struct
 {
-	var_vector_t* vars;
+	var_vec_t* vars;
 } var_scope_entry_t;
 
 var_scope_entry_t* var_scope_entry_new();

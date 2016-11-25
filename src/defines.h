@@ -21,16 +21,13 @@
 #define CHECK(v) { if (! (v)) return NULL; }
 #define CHECK_ERR(v) { error_t ret_val = (v); if (ret_val != SUCCESS) return ret_val; }
 
-#define PANIC { fprintf(stderr, "PANIC\n"), exit(-1); }
+#define PANIC { fprintf(stderr, "PANIC\n"), abort(), exit(-1); }
 
 #define VEC_START_SIZE 1
 
-#define MAKE_VTABLE_H(table_name, prefix, delegate_t)\
-extern delegate_t ast_visits[];
-
 #define MAKE_VTABLE_C(table_name, prefix, delegate_t)\
 \
-delegate_t table_name[] = {	(delegate_t)BOOST_PP_CAT(prefix, atom), (delegate_t)BOOST_PP_CAT(prefix, unop), (delegate_t)BOOST_PP_CAT(prefix, binop),\
+static delegate_t table_name[] = {	(delegate_t)BOOST_PP_CAT(prefix, atom), (delegate_t)BOOST_PP_CAT(prefix, unop), (delegate_t)BOOST_PP_CAT(prefix, binop),\
 							(delegate_t)BOOST_PP_CAT(prefix, program), (delegate_t)BOOST_PP_CAT(prefix, block), (delegate_t)BOOST_PP_CAT(prefix, return),\
 							(delegate_t)BOOST_PP_CAT(prefix, ident), (delegate_t)BOOST_PP_CAT(prefix, type), (delegate_t)BOOST_PP_CAT(prefix, texp), (delegate_t)BOOST_PP_CAT(prefix, cast),\
 							(delegate_t)BOOST_PP_CAT(prefix, var_decl), (delegate_t)BOOST_PP_CAT(prefix, fun_decl), (delegate_t)BOOST_PP_CAT(prefix, fun_call),\

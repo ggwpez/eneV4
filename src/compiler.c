@@ -57,8 +57,6 @@ int compile_file(char const* in_file, char const* out_file)
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Mid End Rrror"), -1;
 
-	program_print(prog);
-
 	ret = be_process(prog, module_name, out_file);
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Back End Error!"), -1;

@@ -5,7 +5,7 @@
 
 typedef struct block_node
 {
-	struct ast_vector* v;
+	struct ast_vec* v;
 } block_node_t;
 
 ast_ptr block_new();

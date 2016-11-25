@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-var_t* var_new_ng(char const* name, LLVMValueRef val)
+var_t* var_new(char const* name, LLVMValueRef val)
 {
 	assert(name);
 	assert(val);

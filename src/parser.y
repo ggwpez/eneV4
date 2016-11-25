@@ -27,13 +27,13 @@ extern program_node_t* prog;
 	char* str;
 	struct program_node* prog;
 	struct var_decl_node* var_decl;
-	struct var_decl_vector* var_decl_list;
+	struct var_decl_vec* var_decl_list;
 	struct block_node* block;
 	struct ident_node* ident;
 	struct ur_type* ur_type;
 	struct type_node* type;
 	struct ast* node;
-	struct ast_vector* ast_vector;
+	struct ast_vec* ast_vec;
 }
 
 %token<ival> T_SINT
@@ -53,10 +53,10 @@ extern program_node_t* prog;
 %type<block> block block_content
 %type<node> block_stmt
 %type<node> exp
-%type<ast_vector> exp_stack
+%type<ast_vec> exp_stack
 %type<var_decl> f_arg
 %type<var_decl_list> f_arg_list
-%type<ast_vector> fun_call_args fun_call_args_content
+%type<ast_vec> fun_call_args fun_call_args_content
 %type<node> fun_call
 %type<node> var_decl fun_decl
 %type<node> term un_term bin_term
@@ -70,9 +70,9 @@ extern program_node_t* prog;
 
 %destructor { delete(ast, $$); } <node>
 %destructor { delete(block, $$); } <block>
-%destructor { delete(ast_vector, $$); } <ast_vector>
+%destructor { delete(ast_vec, $$); } <ast_vec>
 %destructor { delete(var_decl, $$); } <var_decl>
-%destructor { delete(var_decl_vector, $$); } <var_decl_vector>
+%destructor { delete(var_decl_vec, $$); } <var_decl_vec>
 %destructor { delete(type, $$); } <type>
 %destructor { delete(ur_type, $$); } <ur_type>
 %destructor { delete(ident, $$); } <ident>
@@ -87,7 +87,7 @@ program_content: { $$ = new_ng(program,); }
 	program_node_t* prog = $1;
 
 	if ($2)
-		ast_vector_push_back(prog->v, $2);
+		ast_vec_push_back(prog->v, $2);
 }
 
 program_stmt:
@@ -105,7 +105,7 @@ block_content: { $$ = new_ng(block,); }
 	assert($2);
 	block_node_t* block = $1;
 
-	ast_vector_push_back(block->v, $2);
+	ast_vec_push_back(block->v, $2);
 }
 
 block_stmt:
@@ -130,40 +130,40 @@ type: ur_type					{ $$ = new_ng(type, $1); }
 var_decl: type ident			{ $$ = new(var_decl, $1, $2); }
 
 f_arg: type ident   { $$ = new_ng(var_decl, $1, $2); }
-f_arg_list:         { $$ = new_ng(var_decl_vector, 0); }
+f_arg_list:         { $$ = new_ng(var_decl_vec, 0); }
 | f_arg
 {
 	assert($1);
-	var_decl_vector_t* list = new_ng(var_decl_vector, 1);
-	var_decl_vector_push_back(list, $1);
+	var_decl_vec_t* list = new_ng(var_decl_vec, 1);
+	var_decl_vec_push_back(list, $1);
 
 	$$ = list;
 }
 | f_arg_list T_SEQ f_arg
 {
 	assert($3);
-	var_decl_vector_t* list = $1;
+	var_decl_vec_t* list = $1;
 
-	var_decl_vector_push_back(list, $3);
+	var_decl_vec_push_back(list, $3);
 }
 fun_decl:
 		type ident T_BO f_arg_list T_BC block     { $$ = new(fun_decl, $1, $2, $6, $4); }
 
-fun_call_args: { $$ = new_ng(ast_vector, 0); } | fun_call_args_content
+fun_call_args: { $$ = new_ng(ast_vec, 0); } | fun_call_args_content
 fun_call_args_content:
 exp
 {
 	assert($1);
-	ast_vector_t* args = ast_vector_new_ng(1);//new_ng(arg_vector, 1);
-	ast_vector_push_back(args, $1);
+	ast_vec_t* args = ast_vec_new_ng(1);//new_ng(arg_vec, 1);
+	ast_vec_push_back(args, $1);
 
 	$$ = args;
 }
 | fun_call_args_content T_SEQ exp
 {
 	assert($3);
-	ast_vector_t* args = $1;
-	ast_vector_push_back(args, $3);
+	ast_vec_t* args = $1;
+	ast_vec_push_back(args, $3);
 }
 
 fun_call: ident T_BO fun_call_args T_BC { $$ = new(fun_call, $1, $3); }
@@ -182,19 +182,19 @@ exp: exp_stack
 {
 	if (!$1)
 		crash("Expression completly wrong!");
-	size_t l = ast_vector_size($1);
+	size_t l = ast_vec_size($1);
 
 	if (!l)
 		crash("Expression returning void");
 	else if (l > 1)
 		crash("Expression returning more than one value");
 
-	$$ = ast_vector_pop_back($1);	// delete $1
+	$$ = ast_vec_pop_back($1);	// delete $1
 }
 
 exp_stack: term
 {
-	$$ = new_ng(ast_vector, 5);
+	$$ = new_ng(ast_vec, 5);
 	ast_ptr t = $1;
 
 	if (t->t == AST_BINOP)
@@ -202,14 +202,14 @@ exp_stack: term
 	else if (t->t == AST_UNOP)
 		crash("Unary operator cant be applied to [void] (stack empty)");
 	else
-		ast_vector_push_back($$, $1);
+		ast_vec_push_back($$, $1);
 }
 | exp_stack term
 {
 	assert($2);
 	ast_ptr op = $2;
-	ast_vector_t* stack = $1;
-	size_t l = ast_vector_size(stack);
+	ast_vec_t* stack = $1;
+	size_t l = ast_vec_size(stack);
 
 	if (op->t == AST_BINOP)
 	{
@@ -220,9 +220,9 @@ exp_stack: term
 		if (l < 2)
 			crash("Binary operator cant be applied to [...  void] (stack missing one operand)");
 
-		binop->y = ast_vector_pop_back(stack);
-		binop->x = ast_vector_pop_back(stack);
-		ast_vector_push_back(stack, op);
+		binop->y = ast_vec_pop_back(stack);
+		binop->x = ast_vec_pop_back(stack);
+		ast_vec_push_back(stack, op);
 	}
 	else if (op->t == AST_UNOP)
 	{
@@ -233,7 +233,7 @@ exp_stack: term
 
 		if (unop->t == UNOP_CPY)
 		{
-			ast_ptr top = ast_vector_rat(stack, 0);
+			ast_ptr top = ast_vec_rat(stack, 0);
 			ast_ptr cpy = NULL;
 			if (top->t == AST_ATOM)
 			{
@@ -243,14 +243,14 @@ exp_stack: term
 			else
 				cpy = new(atom, ATOM_REF_TO_RES, NULL);
 
-			ast_vector_push_back(stack, cpy);	// copy if atom
+			ast_vec_push_back(stack, cpy);	// copy if atom
 		}
 		else if (unop->t == UNOP_POP)
-			delete(ast, ast_vector_pop_back(stack));
+			delete(ast, ast_vec_pop_back(stack));
 		else
 		{
-			unop->node = ast_vector_pop_back(stack);
-			ast_vector_push_back(stack, op);
+			unop->node = ast_vec_pop_back(stack);
+			ast_vec_push_back(stack, op);
 		}
 	}
 	else if (op->t == AST_CAST)
@@ -260,11 +260,11 @@ exp_stack: term
 		if (! l)
 			crash("A Type cast cant be applied to [void] (stack empty)");
 
-		cast->node = ast_vector_pop_back(stack);
-		ast_vector_push_back(stack, op);
+		cast->node = ast_vec_pop_back(stack);
+		ast_vec_push_back(stack, op);
 	}
 	else
-		ast_vector_push_back(stack, op);
+		ast_vec_push_back(stack, op);
 }
 
 term:
