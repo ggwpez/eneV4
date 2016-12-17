@@ -70,3 +70,25 @@ void r_type_print(r_type_t* node)
 		inbuild_type_print(node->inbuild);
 	printf(")>");
 }
+
+void r_type_pprint(r_type_t* node)
+{
+	assert(node);
+	assert(node->mod < R_TYPE_MOD_size);
+
+	if (node->mod != R_TYPE_MOD_INBUILD)
+	{
+		if (node->mod == R_TYPE_MOD_CONST)
+		{
+			r_type_pprint(node->sub);
+			printf("const ");
+		}
+		else
+		{
+			r_type_pprint(node->sub);
+			putchar('\'');
+		}
+	}
+	else
+		inbuild_type_pprint(node->inbuild);
+}

@@ -10,10 +10,11 @@ typedef enum binop
 	BINOP_DIV,
 	BINOP_DRF,
 	BINOP_EQU,
+	BINOP_ASS,
 	BINOP_SML,
 	BINOP_GRT,
 	BINOP_AND,
-	BINOP_SEQ,		// c comma operator, result is the last expression, right assoc.
+	BINOP_SEQ,		// c comma operator, result is the last expression. right assoc.
 	BINOP_OR,
 	BINOP_size
 } binop_t;

@@ -3,10 +3,11 @@
 #include "../defines.h"
 #include "../errors.h"
 #include "../ast/common.h"
+#include "../compiler_args.h"
 
 #include <llvm-c/Core.h>
 
-error_t il_process(program_node_t* node, const char* mod_name, char** output);
+error_t il_process(program_node_t* node, unsigned opt_lvl, const char* mod_name, char** output);
 
 void* il_create_ast(ast_ptr ast);
 LLVMValueRef il_create_atom(atom_node_t* node);

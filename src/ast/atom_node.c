@@ -9,6 +9,9 @@ ast_ptr atom_new(atom_t t, void const* value)
 
 	switch (t)
 	{
+		case ATOM_BOOL:
+			ret->boolean = (bool)value;
+			break;
 		case ATOM_UINT8:
 			ret->u8  = *(uint8_t*)value;
 			break;
@@ -45,7 +48,7 @@ ast_ptr atom_new(atom_t t, void const* value)
 		case ATOM_REF_TO_RES:
 			break;
 		default:
-			PANIC;
+			PANIC
 	}
 
 	return new(ast, AST_ATOM, (void*)ret);
@@ -75,5 +78,5 @@ void atom_print(atom_node_t* val)
 	else if (val->t == ATOM_REF_TO_RES)
 		printf("<&top>");
 	else
-		PANIC;
+		PANIC
 }

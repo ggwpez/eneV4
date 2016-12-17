@@ -5,6 +5,7 @@
 
 typedef enum value
 {
+	ATOM_BOOL,
 	ATOM_SINT8,
 	ATOM_SINT16,
 	ATOM_SINT32,
@@ -25,6 +26,7 @@ typedef struct atom_node
 
 	union
 	{
+		bool	 boolean;
 		uint8_t  u8;
 		uint16_t u16;
 		uint32_t u32;

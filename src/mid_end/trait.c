@@ -16,7 +16,7 @@ type_size_t trait_sizeof(r_type_t* t)
 	else if (trait_is_void(t))
 		return 0;
 	else
-		PANIC;
+		PANIC
 }
 
 r_type_t* trait_typeof(ast_ptr node)

@@ -28,17 +28,21 @@
 error_t il_optimize(LLVMModuleRef mod, unsigned level)
 {
 	assert(mod);
-	LLVMPassManagerRef mng = LLVMCreatePassManager();
+	level = level > 3 ? 3 : level;
+	LLVMPassManagerRef pass = LLVMCreatePassManager();
 	LLVMPassManagerBuilderRef build = LLVMPassManagerBuilderCreate();
 
-	if (! mng || ! build)
+	if (! pass || ! build)
 		return UNDERLYING;
 
 	LLVMPassManagerBuilderSetOptLevel(build, level);
 	LLVMPassManagerBuilderSetSizeLevel(build, 0);
-	LLVMPassManagerBuilderPopulateModulePassManager(build, mng);
+//	LLVMPassManagerBuilderUseInlinerWithThreshold(build, 16);
+	LLVMPassManagerBuilderPopulateModulePassManager(build, pass);
+
+	LLVMRunPassManager(pass, mod);
 
 	LLVMPassManagerBuilderDispose(build);
-	LLVMDisposePassManager(mng);
+	LLVMDisposePassManager(pass);
 	return SUCCESS;
 }

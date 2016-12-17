@@ -23,3 +23,4 @@ r_type_t* r_type_new(r_type_mod_t mod, inbuild_type_t* fundamental, r_type_t* su
 r_type_t* r_type_cpy(r_type_t* obj);
 void r_type_del(r_type_t* node);
 void r_type_print(r_type_t* node);
+void r_type_pprint(r_type_t* node);

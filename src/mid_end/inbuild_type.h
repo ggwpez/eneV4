@@ -14,6 +14,7 @@ typedef enum inbuild
 {
 	IT_STACK_TOP,
 	IT_VOID,
+	IT_BOOL,
 	IT_U8,
 	IT_U16,
 	IT_U32,
@@ -41,6 +42,7 @@ typedef struct inbuild_type
 } inbuild_type_t;
 void inbuild_type_del(inbuild_type_t* node);
 void inbuild_type_print(inbuild_type_t* node);
+void inbuild_type_pprint(inbuild_type_t* node);
 
 extern inbuild_type_t inbuild_type_table[];
 

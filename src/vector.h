@@ -45,6 +45,7 @@ void BOOST_PP_CAT(t, _vec_unlock)(BOOST_PP_CAT(t, _vec_t)* v);
 BOOST_PP_CAT(t, _vec_t)* BOOST_PP_CAT(t, _vec_new_ng)(size_t capacity)\
 {\
 	define_ptr(BOOST_PP_CAT(t, _vec_t), ret);\
+	assert(ret);\
 \
 	ret->locked = 0;\
 	ret->capacity = 0;\
@@ -58,22 +59,22 @@ BOOST_PP_CAT(t, _vec_t)* BOOST_PP_CAT(t, _vec_new_ng)(size_t capacity)\
 int BOOST_PP_CAT(t, _vec_free)(BOOST_PP_CAT(t, _vec_t)* v)\
 {\
 	assert(v);\
-	if (! v->data) return 0;\
 	if (v->locked) return -1;\
 	\
-	free(v->data);\
-	free(v);\
 	v->locked = 0;\
 	v->capacity = 0;\
 	v->ptr = NULL;\
 	v->data = NULL;\
+	\
+	if (v->data)\
+		free(v->data);\
+	free(v);\
 	return 0;\
 }\
 \
 int BOOST_PP_CAT(t, _vec_del)(BOOST_PP_CAT(t, _vec_t)* v)\
 {\
 	assert(v);\
-	if (! v->data) return 0;\
 	if (v->locked) return -1;\
 \
 	for (size_t i = 0; i < BOOST_PP_CAT(t, _vec_size)(v); ++i)      /*TODO optimize*/\
@@ -97,6 +98,7 @@ BOOST_PP_CAT(t, _vec_t)* BOOST_PP_CAT(t, _vec_resize)(BOOST_PP_CAT(t, _vec_t)* v
 		if (!v->data)		/* init?*/\
 		{\
 			v->data = (BOOST_PP_CAT(t, _ptr)*)malloc(new_capacity *sizeof(BOOST_PP_CAT(t, _ptr)));\
+			assert(v->data);\
 			if (!v->data)\
 				return NULL;\
 			v->capacity = new_capacity;\
@@ -107,6 +109,7 @@ BOOST_PP_CAT(t, _vec_t)* BOOST_PP_CAT(t, _vec_resize)(BOOST_PP_CAT(t, _vec_t)* v
 			size_t l = BOOST_PP_CAT(t, _vec_size)(v);			/* needed for moving v->ptr*/\
 			BOOST_PP_CAT(t, _ptr)* tmp = (BOOST_PP_CAT(t, _ptr)*)realloc(v->data, new_capacity *sizeof(BOOST_PP_CAT(t, _ptr)));\
 \
+			assert(tmp);\
 			if (!tmp)\
 				return NULL;		/* TODO do i have to free failed realloc? YEP*/\
 			else\
@@ -119,9 +122,9 @@ BOOST_PP_CAT(t, _vec_t)* BOOST_PP_CAT(t, _vec_resize)(BOOST_PP_CAT(t, _vec_t)* v
 	}\
 	else if (v->data) /* delete all?*/\
 	{\
-		if (! BOOST_PP_CAT(t, _vec_free)(v))\
-			return v;\
-		return NULL;\
+		if (BOOST_PP_CAT(t, _vec_free)(v))\
+			return NULL;\
+		return v;\
 	}\
 \
 	return v;\
@@ -131,7 +134,7 @@ size_t BOOST_PP_CAT(t, _vec_size)(BOOST_PP_CAT(t, _vec_t)* v)\
 {\
 	assert(v);\
 	size_t s = !v->data ? 0 : (v->ptr -v->data);\
-	assert(s < 1000000);\
+	assert(s < 10000000 || !"Remove if needed");\
 	return s;\
 }\
 \

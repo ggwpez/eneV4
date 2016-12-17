@@ -23,7 +23,7 @@ void binop_del(binop_node_t* node)
 	free(node);
 }
 
-char const* binop_strings[] = { "+", "-", "*", "/", "~", "?", "<", ">", "&", ",", "|" };
+char const* binop_strings[] = { "+", "-", "*", "/", "~", "?", "=", "<", ">", "&", ",", "|" };
 static_assert(_countof(binop_strings) == BINOP_size, "binop_strings invalid");
 void binop_print(binop_node_t* node)
 {

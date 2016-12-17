@@ -64,7 +64,7 @@ r_type_t* cast_drop_const(r_type_t* t, bool make_cpy)
 	if (! trait_is_const(t))
 		return make_cpy ? r_type_cpy(t) : t;
 	else
-		return make_cpy ? r_type_cpy(t->sub) : t;
+		return make_cpy ? r_type_cpy(t->sub) : t->sub;
 }
 
 r_type_t* cast_drop_ptr(r_type_t* t, bool make_cpy)
@@ -74,5 +74,5 @@ r_type_t* cast_drop_ptr(r_type_t* t, bool make_cpy)
 	if (! trait_is_ptr(t))
 		return make_cpy ? r_type_cpy(t) : t;
 	else
-		return make_cpy ? r_type_cpy(t->sub) : t;
+		return make_cpy ? r_type_cpy(t->sub) : t->sub;
 }

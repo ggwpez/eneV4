@@ -1,3 +1,5 @@
 #pragma once
 
-int compile_file(char const* in_file, const char* out_file);
+#include "compiler_args.h"
+
+int compile_file(compiler_args_t* args);

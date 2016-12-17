@@ -24,8 +24,13 @@ LLVMTypeRef cast_llvm_from_inbuild(LLVMContextRef cont, inbuild_type_t* t)
 			return LLVMDoubleTypeInContext(cont);
 
 		default:
-			PANIC;
+			PANIC
 	}
+}
+
+LLVMTypeRef cast_llvm_drop_ptr(LLVMTypeRef const t)
+{
+	assert(0);
 }
 
 LLVMTypeRef cast_llvm_from_resolved(LLVMContextRef cont, r_type_t* t)
@@ -39,5 +44,5 @@ LLVMTypeRef cast_llvm_from_resolved(LLVMContextRef cont, r_type_t* t)
 	else if (t->mod == R_TYPE_MOD_INBUILD)
 		return cast_llvm_from_inbuild(cont, t->inbuild);
 	else
-		PANIC;
+		PANIC
 }

@@ -1,5 +1,6 @@
 #include "il.h"
 #include "cast_llvm.h"
+#include "../mid_end/cast.h"
 #include "../mid_end/trait.h"
 #include "il_optimizer.h"
 #include "var_scope.h"
@@ -18,7 +19,7 @@ static LLVMContextRef con = NULL;
 static LLVMBuilderRef build = NULL;
 static var_scope_t* sc = NULL;			// scope
 
-error_t il_process(program_node_t* node, char const* mod_name, char** output)
+error_t il_process(program_node_t* node, unsigned opt_lvl, char const* mod_name, char** output)
 {
 	assert(node);
 	assert(mod_name);
@@ -29,14 +30,12 @@ error_t il_process(program_node_t* node, char const* mod_name, char** output)
 	build = LLVMCreateBuilderInContext(con);
 	sc = var_scope_new();
 
-	if (! mod || ! con || ! build)
-		return UNDERLYING;
+	CHECK(mod && con && build, UNDERLYING);
 
 	LLVMModuleRef prog = il_create_program(node);
-	if (! prog)
-		return UNKNOWN;
+	CHECK(prog, UNKNOWN);
 
-	il_optimize(mod, 3);
+	il_optimize(mod, opt_lvl);
 
 	char* error = NULL;
 	if (LLVMVerifyModule(mod, LLVMPrintMessageAction, &error))
@@ -47,8 +46,7 @@ error_t il_process(program_node_t* node, char const* mod_name, char** output)
 	LLVMDisposeMessage(error);
 
 	*output = LLVMPrintModuleToString(mod);
-	if (! output)
-		return UNDERLYING;
+	CHECK(output, UNDERLYING);
 
 	var_scope_del(sc);
 	LLVMDisposeBuilder(build);
@@ -94,12 +92,11 @@ LLVMValueRef il_create_atom(atom_node_t* node)
 		case ATOM_DOUBLE:
 			return LLVMConstReal(LLVMDoubleTypeInContext(con), node->f64);
 
-		case ATOM_REF_TO_RES:
-		default:
-			PANIC;
+		case ATOM_REF_TO_RES: default:
+			PANIC
 	}
 
-	return NULL;
+	PANIC
 }
 
 LLVMValueRef il_create_unop(unop_node_t* node)
@@ -107,28 +104,24 @@ LLVMValueRef il_create_unop(unop_node_t* node)
 	assert(node);
 
 	r_type_t* t = trait_typeof(node->node);
-
 	LLVMValueRef ptr = il_create_ast(node->node);
 
-	if (! t || ! ptr)
-		return NULL;
+	CHECK(t && ptr, NULL);
 
 	switch (node->t)
 	{
 		case UNOP_DRF:
-			if (trait_is_ptr(t))
 			{
 				LLVMValueRef null = LLVMConstInt(LLVMInt32TypeInContext(con), 0, 0);
-				LLVMValueRef v_ptr = LLVMBuildGEP(build, ptr, &null, 1, "Load address for ~");
-				return LLVMBuildLoad(build, v_ptr, "");
+				LLVMValueRef v_ptr = LLVMBuildGEP(build, ptr, &null, 1, "lea");
+
+				return LLVMBuildLoad(build, v_ptr, "drf");
 			}
-			else
-				return fflush(stdout), fprintf(stderr, "%s", "Operator: '~' cant be applied to ["), r_type_print(t), fflush(stdout), NULL;
 		default:
-			return NULL;
+			PANIC
 	}
 
-	return NULL;
+	PANIC
 }
 
 LLVMValueRef il_create_binop(binop_node_t* node)
@@ -136,10 +129,8 @@ LLVMValueRef il_create_binop(binop_node_t* node)
 	assert(node);
 	r_type_t* t1 = trait_typeof(node->x),
 			* t2 = trait_typeof(node->y);
-
-	assert(trait_is_same(t1, t2) || trait_is_stack_top(t2));	// scoper should have casted both to common type, or top stack ref
-	bool is_floating = trait_is_floating(t1);
-
+	bool is_floating = trait_is_floating(t1),
+		 is_signed = trait_is_signed(t1);
 	LLVMValueRef x = il_create_ast(node->x), y;
 
 	if (trait_is_stack_top(t2))
@@ -147,24 +138,49 @@ LLVMValueRef il_create_binop(binop_node_t* node)
 	else
 		y = il_create_ast(node->y);
 
-	if (! t1 || ! t2 || ! x || ! y)
-		return NULL;
+	CHECK(t1 && t2 && x && y, NULL);
 
 	switch (node->t)
 	{
+		case BINOP_ASS:
+		{
+			LLVMValueRef null = LLVMConstInt(LLVMInt32TypeInContext(con), 0, 0);
+			LLVMValueRef v_ptr = LLVMBuildGEP(build, x, &null, 1, "lea");
+
+			return LLVMBuildStore(build, y, v_ptr);
+		}
 		case BINOP_ADD:
-			return is_floating ? LLVMBuildFAdd(build, x, y, "faddtmp") : LLVMBuildAdd(build, x, y, "addtmp");
+			return is_floating ? LLVMBuildFAdd(build, x, y, "faddtmp") : LLVMBuildAdd(build, x, y, "add");
 		case BINOP_SUB:
-			return is_floating ? LLVMBuildFSub(build, x, y, "fsubtmp") : LLVMBuildSub(build, x, y, "subtmp");
+			return is_floating ? LLVMBuildFSub(build, x, y, "fsubtmp") : LLVMBuildSub(build, x, y, "sub");
 		case BINOP_MUL:
-			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "multmp");
+			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "mul");
 		case BINOP_DIV:
-			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "multmp");
+			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "mul");
+		case BINOP_SML:
+		{
+			if (is_floating)
+				return LLVMBuildFCmp(build, LLVMRealULT, x, y, "f_less");
+			else
+			{
+				if (is_signed)
+					return LLVMBuildICmp(build, LLVMIntSLT, x, y, "i_less");
+				else
+					return LLVMBuildICmp(build, LLVMIntULT, x, y, "u_less");
+			}
+		}
+		case BINOP_EQU:
+		{
+			if (is_floating)
+				return LLVMBuildFCmp(build, LLVMRealUEQ, x, y, "f_eq");
+			else
+				return LLVMBuildICmp(build, LLVMIntEQ, x, y, "i_eq");
+		}
 		default:
-			return NULL;
+			PANIC
 	}
 
-	return NULL;
+	PANIC
 }
 
 LLVMModuleRef il_create_program(program_node_t* node)
@@ -176,8 +192,7 @@ LLVMModuleRef il_create_program(program_node_t* node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr inst = ast_vec_at(node->v, i);
-		if (! il_create_ast(inst))
-			return NULL;
+		CHECK(il_create_ast(inst), NULL);
 	}
 	var_scope_leave(sc);
 
@@ -207,8 +222,8 @@ LLVMValueRef il_create_return(return_node_t* node)
 	assert(node);
 
 	LLVMValueRef ret = il_create_ast(node->exp);
-	if (! ret)
-		return NULL;
+	CHECK(ret, NULL);
+
 	return LLVMBuildRet(build, ret);
 }
 
@@ -255,7 +270,7 @@ LLVMValueRef il_create_var_decl(var_decl_node_t* node)
 {
 	assert(node);
 
-	LLVMTypeRef type = il_create_type(node->type);
+	LLVMTypeRef type = cast_llvm_from_resolved(con, cast_drop_ptr(node->type->r_type, false));
 	LLVMValueRef alloc = LLVMBuildAlloca(build, type, node->name->str);
 
 	var_scope_add(sc, var_new(node->name->str, alloc));
@@ -275,8 +290,7 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 	for (size_t	i = 0; i < args_s; ++i)
 	{
 		var_decl_node_t* var_decl = var_decl_vec_at(node->args, i);
-		if (! (args_t[i] = il_create_type(var_decl->type)))
-			return NULL;
+		CHECK(args_t[i] = il_create_type(var_decl->type), NULL);
 	}
 	ret_t = il_create_type(node->type);
 
@@ -324,12 +338,40 @@ LLVMValueRef il_create_if(if_node_t* node)
 {
 	assert(node);
 
-	return NULL;
+		LLVMValueRef cond = il_create_ast(node->cond);
+		CHECK(cond, NULL);
+
+		LLVMBasicBlockRef true_block, false_block, end_block;
+		{
+			LLVMValueRef function = LLVMGetBasicBlockParent(LLVMGetInsertBlock(build));
+			true_block = LLVMAppendBasicBlockInContext(con, function, "if_true");
+			false_block = LLVMAppendBasicBlockInContext(con, function, "if_false");
+			end_block = LLVMAppendBasicBlockInContext(con, function, "if_resume");
+		}
+
+		LLVMValueRef cmp = LLVMBuildICmp(build, LLVMIntNE, cond, LLVMConstNull(LLVMTypeOf(cond)), "if");
+		LLVMValueRef ret = LLVMBuildCondBr(build, cmp, true_block, false_block);
+		CHECK(true_block && false_block && end_block && cmp && ret, NULL);
+
+		{
+			LLVMPositionBuilderAtEnd(build, true_block);
+			true_block = il_create_block(node->true_node);					// required
+			LLVMBuildBr(build, end_block);
+		}{
+			LLVMPositionBuilderAtEnd(build, false_block);
+			false_block = il_create_block(node->else_node);					// required
+			LLVMBuildBr(build, end_block);
+		}
+
+		LLVMPositionBuilderAtEnd(build, end_block);
+		return ret;
 }
 
 LLVMValueRef il_create_while(while_node_t* node)
 {
 	assert(node);
+
+
 
 	return NULL;
 }

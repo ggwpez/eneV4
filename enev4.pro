@@ -1,9 +1,9 @@
 CONFIG -= qt c++
-QMAKE_LIBS +=-lfl -ly -rdynamic `llvm-config --system-libs --libs	passes`
-
+QMAKE_LIBS +=-lfl -ly -rdynamic `llvm-config --system-libs --libs passes`
+QMAKE_LFLAGS += `llvm-config --ldflags`
 QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
 
-QMAKE_CFLAGS_WARN_ON +=-Werror -Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses -Wno-date-time
+QMAKE_CFLAGS_WARN_ON +=-Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses -Wno-sign-compare -Wno-date-time
 FLEXSOURCES = src/lexer.l
 BISONSOURCES = src/parser.y
 
@@ -43,7 +43,8 @@ SOURCES += \
 	src/ast/cast_node.c \
 	src/back_end/var.c \
 	src/back_end/var_scope.c \
-	src/back_end/var_scope_entry.c
+	src/back_end/var_scope_entry.c \
+	src/mid_end/scoper_inbuild.c
 
 TEMPLATE = app
 
@@ -108,4 +109,6 @@ HEADERS += \
 	src/ast/cast_node.h \
 	src/back_end/var.h \
 	src/back_end/var_scope.h \
-	src/back_end/var_scope_entry.h
+	src/back_end/var_scope_entry.h \
+	src/mid_end/scoper_inbuild.h \
+    src/compiler_args.h

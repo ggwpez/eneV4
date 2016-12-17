@@ -12,7 +12,7 @@
 void crash(char const* msg)
 {
 	fprintf(stderr, "%s\n", msg);
-	exit(0);
+	exit(1);
 }
 
 extern program_node_t* prog;
@@ -42,10 +42,12 @@ extern program_node_t* prog;
 %token<dval> T_DOUBLE
 %token<str> T_ID
 %token T_EQU T_NOT T_POP T_CPY T_DRF
+%token T_ASS T_DDOT
 %token T_ADD T_SUB T_MUL T_DIV T_SML T_GRT T_AND T_OR
 %token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI T_PTR T_CONST
 %token T_WHILE T_FOR T_IF T_NSPACE T_ELSE T_BREAK T_GOON T_RETURN T_STRUCT
 %token T_NEWLINE T_QUIT T_UNKNOWN T_EOF
+%token T_TRUE T_FALSE
 %right T_SEQ
 
 %type<prog> program program_content
@@ -59,7 +61,7 @@ extern program_node_t* prog;
 %type<ast_vec> fun_call_args fun_call_args_content
 %type<node> fun_call
 %type<node> var_decl fun_decl
-%type<node> term un_term bin_term
+%type<node> term un_term bin_term assign
 %type<node> if_stmt while_stmt for_stmt
 %type<type> type
 %type<node> cast
@@ -118,14 +120,14 @@ block_stmt:
 		| for_stmt
 
 ident:
-		T_ID						{ $$ = new_ng(ident, $1, true); }
+		T_ID					{ $$ = new_ng(ident, $1, true); }
 
 ur_type:
 		ident					{ $$ = new_ng(ur_type, UR_TYPE_MOD_ID, $1, NULL); }
 		| ur_type T_PTR			{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1); }
 		| ur_type T_CONST		{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1); }
 
-type: ur_type					{ $$ = new_ng(type, $1); }
+type: ur_type T_DDOT			{ $$ = new_ng(type, $1); }
 
 var_decl: type ident			{ $$ = new(var_decl, $1, $2); }
 
@@ -170,13 +172,15 @@ fun_call: ident T_BO fun_call_args T_BC { $$ = new(fun_call, $1, $3); }
 
 if_stmt:
 		T_IF T_BO exp T_BC block T_ELSE block       { $$ = new(if, $3, $5, $7); }
-	   | T_IF T_BO exp T_BC block                   { $$ = new(if, $3, $5, NULL); }
+	   | T_IF T_BO exp T_BC block                   { $$ = new(if, $3, $5, new_ng(block,)); }
 
 while_stmt:
-		T_WHILE T_BO exp T_BC block             { $$ = new(while, $3, $5); }
+		T_WHILE T_BO exp T_BC block					{ $$ = new(while, $3, $5); }
 
 for_stmt:
 		T_FOR T_BO exp T_SEMI exp T_SEMI exp T_BC block { $$ = new(for, $3, $5, $7, $9); }
+
+assign: exp T_ASS exp { $$ = new(assign, $1, $3); }
 
 exp: exp_stack
 {
@@ -272,10 +276,12 @@ term:
    | atom
    | bin_term
    | un_term
+   | ident { $$ = new(ast, AST_IDENT, $1); }
    | cast
 
 atom:
-	T_ID					{ $$ = new(ident, $1, true); }
+	T_TRUE		{ $$ = new(atom, ATOM_BOOL, &prog); }	// just pass a non null ptr
+	| T_FALSE	{ $$ = new(atom, ATOM_BOOL, NULL); }
 	| T_SINT
 {
 
@@ -317,6 +323,7 @@ un_term:
 
 bin_term:
 	T_EQU				{ $$ = new(binop, BINOP_EQU, NULL, NULL); }
+	| T_ASS				{ $$ = new(binop, BINOP_ASS, NULL, NULL); }
 	| T_ADD				{ $$ = new(binop, BINOP_ADD, NULL, NULL); }
 	| T_SUB				{ $$ = new(binop, BINOP_SUB, NULL, NULL); }
 	| T_MUL				{ $$ = new(binop, BINOP_MUL, NULL, NULL); }

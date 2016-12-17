@@ -41,23 +41,23 @@ program_node_t* parse_file(char const* in_file)
 	return prog;
 }
 
-int compile_file(char const* in_file, char const* out_file)
+int compile_file(compiler_args_t* args)
 {
-	program_node_t* prog = parse_file(in_file);
+	program_node_t* prog = parse_file(args->in_file);
 
 	if (! prog)
 		return -1;
 
 	error_t ret;
 	char *module_name;
-	if (! asprintf(&module_name, "%s-module", in_file ? in_file : "stdin"))
+	if (! asprintf(&module_name, "%s-module", args->in_file ? args->in_file : "stdin"))
 		return -1;
 
 	ret = me_process(prog);
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Mid End Rrror"), -1;
 
-	ret = be_process(prog, module_name, out_file);
+	ret = be_process(prog, args->opt_lvl, module_name, args->out_file);
 	if (ret)
 		return fprintf(stderr, "\n\n%s\n", "Back End Error!"), -1;
 

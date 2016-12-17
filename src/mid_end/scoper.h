@@ -12,6 +12,7 @@ error_t scoper_transform_ast(scope_t* sc, ast_ptr* ast);
 error_t scoper_transform_atom(scope_t* sc, ast_ptr* ast, atom_node_t* node);
 error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t* node);
 error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t* node);
+error_t scoper_transform_assign(scope_t* sc, ast_ptr* ast, program_node_t* node);
 error_t scoper_transform_program(scope_t* sc, ast_ptr* ast, program_node_t* node);
 error_t scoper_transform_block(scope_t* sc, ast_ptr* ast, block_node_t* node);
 error_t scoper_transform_return(scope_t* sc, ast_ptr* ast, return_node_t* node);

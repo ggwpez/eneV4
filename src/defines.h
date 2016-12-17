@@ -18,7 +18,7 @@
 #define delete(t, var) (t##_del(var))
 #define _countof(arr) (sizeof(arr) /sizeof(arr[0]))
 #define assert_cast(var, type, e) (assert(var), assert(var->node), assert(var->t == e), (type)var->node)
-#define CHECK(v) { if (! (v)) return NULL; }
+#define CHECK(v, ret) { if (! (v)) return ret; }
 #define CHECK_ERR(v) { error_t ret_val = (v); if (ret_val != SUCCESS) return ret_val; }
 
 #define PANIC { fprintf(stderr, "PANIC\n"), abort(), exit(-1); }
