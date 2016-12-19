@@ -33,7 +33,7 @@ error_t scoper_inbuild_typeof(scope_t* sc, ast_ptr* ast, fun_call_node_t* node)
 	CHECK_ERR(scoper_transform_ast(sc, arg));
 
 	r_type_t* t = trait_typeof(*arg);
-	CHECK(t, INTERNAL);
+	RAISE(t, INTERNAL);
 
 	{
 		texp_node_t* texp = assert_cast((*arg), texp_node_t*, AST_TEXP);
@@ -51,7 +51,7 @@ error_t scoper_inbuild_trait_is_ptr(scope_t* sc, ast_ptr* ast, fun_call_node_t* 
 	CHECK_ERR(scoper_transform_ast(sc, arg));
 
 	r_type_t* t = trait_typeof(*arg);
-	CHECK(t, INTERNAL);
+	RAISE(t, INTERNAL);
 
 	int smth = trait_is_ptr(t);
 	*ast = texp_new(new(atom, ATOM_UINT8, &smth), scope_resolve_inbuild_str(sc, "u8"));
@@ -64,7 +64,7 @@ error_t scoper_inbuild_trait_is_const(scope_t* sc, ast_ptr* ast, fun_call_node_t
 	CHECK_ERR(scoper_transform_ast(sc, arg));
 
 	r_type_t* t = trait_typeof(*arg);
-	CHECK(t, INTERNAL);
+	RAISE(t, INTERNAL);
 
 	int smth = trait_is_const(t);
 	*ast = texp_new(new(atom, ATOM_UINT8, &smth), scope_resolve_inbuild_str(sc, "u8"));

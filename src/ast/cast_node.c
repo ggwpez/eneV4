@@ -13,15 +13,17 @@ ast_ptr cast_new(ast_ptr node, ur_type_t* t)
 
 void cast_del(cast_node_t* node)
 {
-	delete(ast, node->node);
+	if (node->node)
+		delete(ast, node->node);
 	delete(ur_type, node->t);
 	free(node);
 }
 
 void cast_print(cast_node_t* node)
 {
-	printf("<cast("),
-		ast_print(node->node), putchar(','),
+	printf("<cast(");
+	if (node->node)
+		ast_print(node->node), putchar(',');
 		ur_type_print(node->t),
 	printf(")>");
 }

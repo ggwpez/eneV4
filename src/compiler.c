@@ -37,6 +37,7 @@ program_node_t* parse_file(char const* in_file)
 
 	if (yyin != stdin)
 		fclose(yyin);
+	yylex_destroy();
 
 	return prog;
 }

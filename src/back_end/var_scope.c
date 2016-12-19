@@ -31,7 +31,7 @@ void var_scope_leave(var_scope_t* sc)
 	assert(sc);
 	assert(var_scope_entry_vec_size(sc->scopes));	// You forgot to enter
 
-	var_scope_entry_vec_pop_back(sc->scopes);
+	var_scope_entry_del(var_scope_entry_vec_pop_back(sc->scopes));
 }
 
 void var_scope_add(var_scope_t* sc, var_t* var)

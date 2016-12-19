@@ -13,7 +13,7 @@ scope_t* scope_new()
 void scope_del(scope_t* obj)
 {
 	assert(obj);
-	assert(! context_vec_size(obj->contexts));		// check whether all contexts are left
+	assert(! context_vec_size(obj->contexts));		// RAISE whether all contexts are left
 
 	context_vec_del(obj->contexts);
 	free(obj);
@@ -68,17 +68,14 @@ var_decl_node_t* scope_get_var(scope_t* obj, ident_node_t* name)
 	assert(name);
 
 	size_t l = context_vec_size(obj->contexts);
-	size_t i = 0;
 
 	while (l)
 	{
-		context_t* cont = context_vec_rat(obj->contexts, i++);
+		context_t* cont = context_vec_at(obj->contexts, --l);
 		var_decl_node_t* ret = context_get_var(cont, name);
 
 		if (ret)
 			return ret;
-
-		l--;
 	}
 
 	return NULL;

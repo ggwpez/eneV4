@@ -76,7 +76,7 @@ error_t context_add_fun(context_t* obj, fun_decl_node_t* elem)
 	assert(elem->type->r_type);
 
 	if (! fun_decl_vec_push_back(obj->funs, elem))
-		return CON_UNDERLYING;
+		return UNDERLYING;
 
 	return SUCCESS;
 }
@@ -88,7 +88,7 @@ error_t context_add_var(context_t* obj, var_decl_node_t* elem)
 	assert(elem->type->r_type);
 
 	if (! var_decl_vec_push_back(obj->vars, elem))
-		return CON_UNDERLYING;
+		return UNDERLYING;
 
 	return SUCCESS;
 }

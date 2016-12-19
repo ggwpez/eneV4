@@ -145,7 +145,7 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 
 	if (trait_is_same(t1, t2))
 		return SUCCESS;
-	CHECK(trait_is_castable_to(t1, t2), SC_BAD_TYPE_CAST);
+	RAISE(trait_is_castable_to(t1, t2), SC_BAD_TYPE_CAST);
 
 	if (trait_is_ptr(t1) && trait_is_ptr(t2))	// does this require recursion?
 		return scoper_create_texp_cast(parent, node, t2->sub);
@@ -228,11 +228,16 @@ error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 	if (node->t == BINOP_ASS)
 	{
 		r_type_t* var_t = cast_drop_ptr(x->type, true);
-
 		if (! trait_is_ptr(x->type))
 			return fprintf(stderr, "%s\n", "Left part of an assignment must be a pointer"), SC_OVERLOAD_FAULT;
+
 		if (! trait_is_same(var_t, y->type))
-			return fprintf(stderr, "%s\n", "Assignments take type [T' T] for all T"), SC_OVERLOAD_FAULT;
+		{
+			if (! trait_is_castable_to(y->type, var_t))
+				return fprintf(stderr, "%s\n", "Implicit cast in assignment failed"), SC_BAD_TYPE_CAST;
+
+			CHECK_ERR(scoper_create_texp_cast(&node->y, y, var_t));
+		}
 
 		*ast = new(texp, *ast, var_t);
 		return SUCCESS;
@@ -244,7 +249,7 @@ error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 		// TODO look here
 		r_type_t* nt = cast_common_type(x->type, y->type, true);
 
-		CHECK(nt, SC_BAD_TYPE_CAST);
+		RAISE(nt, SC_BAD_TYPE_CAST);
 		CHECK_ERR(scoper_create_texp_cast(&node->x, x, nt));	// cast both to common type
 		CHECK_ERR(scoper_create_texp_cast(&node->y, y, nt));
 
@@ -321,7 +326,7 @@ error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
 	r_type_t* nt = NULL;
 	var_decl_node_t* decl = scope_get_var(sc, node);
 
-	CHECK(decl, SC_VAR_NOT_FOUND);
+	RAISE(decl, (fprintf(stderr, "Var: '%s' undeclared", node->str), SC_VAR_NOT_FOUND));
 	assert(nt = r_type_cpy(decl->type->r_type));
 
 	*ast = new(texp, *ast, nt);
@@ -349,9 +354,14 @@ error_t scoper_transform_cast(scope_t* sc, ast_ptr* ast, cast_node_t* node)
 	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
 	r_type_t* nt = scope_resolve_ur_type(sc, node->t);
 
-	CHECK(nt, SC_TRANSFORM_TYPE);
+	RAISE(nt, SC_TRANSFORM_TYPE);
 	CHECK_ERR(scoper_create_texp_cast(&node->node, x, nt));	// TODO very ugly, also leaking node
 
+	{
+		ur_type_del(node->t);
+	}
+
+	r_type_del(nt);
 	*ast = node->node;
 	//*ast = new(texp, *ast, nt);
 	return SUCCESS;
@@ -369,6 +379,7 @@ error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t* no
 	return SUCCESS;
 }
 
+// Shut your eyes, spaghetti code ahead!
 error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *node)
 {
 	(void)ast;
@@ -378,11 +389,29 @@ error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *no
 	CHECK_ERR(scope_transform_vars(sc, node->args));					// transform arg	types
 	CHECK_ERR(scope_add_fun(sc, node));
 
+	{// Add pointers (needed in the block)
+		size_t s = var_decl_vec_size(node->args);
+		for (size_t i = 0; i < s; ++i)
+		{
+			var_decl_node_t* decl = var_decl_vec_at(node->args, i);
+			decl->type->r_type = cast_add_ptr(decl->type->r_type, true);
+		}
+	}
+
 	scope_enter(sc);
 	CHECK_ERR(scope_add_vars(sc, node->args));					// Add args
 	f_ret_type = node->type->r_type;
 	CHECK_ERR(scoper_transform_block(sc, NULL, node->code));
 	scope_leave(sc);
+
+	{// Remove pointers, superfluous in back-end
+		size_t s = var_decl_vec_size(node->args);
+		for (size_t i = 0; i < s; ++i)
+		{
+			var_decl_node_t* decl = var_decl_vec_at(node->args, i);
+			decl->type->r_type = cast_drop_ptr(decl->type->r_type, true);
+		}
+	}
 
 	return SUCCESS;
 }

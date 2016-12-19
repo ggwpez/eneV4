@@ -64,10 +64,10 @@ int BOOST_PP_CAT(t, _vec_free)(BOOST_PP_CAT(t, _vec_t)* v)\
 	v->locked = 0;\
 	v->capacity = 0;\
 	v->ptr = NULL;\
-	v->data = NULL;\
-	\
 	if (v->data)\
 		free(v->data);\
+	v->data = NULL;\
+	\
 	free(v);\
 	return 0;\
 }\
@@ -200,7 +200,7 @@ BOOST_PP_CAT(t, _ptr) BOOST_PP_CAT(t, _vec_pop_back)(BOOST_PP_CAT(t, _vec_t)* v)
 	if (!BOOST_PP_CAT(t, _vec_size)(v))		/* <=> (v->ptr == v->data)*/\
 		return NULL;\
 \
-	return (*--v->ptr);				/* TODO check contract*/\
+	return (*--v->ptr);				/* TODO RAISE contract*/\
 }\
 \
 void BOOST_PP_CAT(t, _vec_print)(BOOST_PP_CAT(t, _vec_t)* v)\

@@ -30,10 +30,10 @@ error_t il_process(program_node_t* node, unsigned opt_lvl, char const* mod_name,
 	build = LLVMCreateBuilderInContext(con);
 	sc = var_scope_new();
 
-	CHECK(mod && con && build, UNDERLYING);
+	RAISE(mod && con && build, UNDERLYING);
 
 	LLVMModuleRef prog = il_create_program(node);
-	CHECK(prog, UNKNOWN);
+	RAISE(prog, UNKNOWN);
 
 	il_optimize(mod, opt_lvl);
 
@@ -46,7 +46,7 @@ error_t il_process(program_node_t* node, unsigned opt_lvl, char const* mod_name,
 	LLVMDisposeMessage(error);
 
 	*output = LLVMPrintModuleToString(mod);
-	CHECK(output, UNDERLYING);
+	RAISE(output, UNDERLYING);
 
 	var_scope_del(sc);
 	LLVMDisposeBuilder(build);
@@ -106,7 +106,7 @@ LLVMValueRef il_create_unop(unop_node_t* node)
 	r_type_t* t = trait_typeof(node->node);
 	LLVMValueRef ptr = il_create_ast(node->node);
 
-	CHECK(t && ptr, NULL);
+	RAISE(t && ptr, NULL);
 
 	switch (node->t)
 	{
@@ -138,7 +138,7 @@ LLVMValueRef il_create_binop(binop_node_t* node)
 	else
 		y = il_create_ast(node->y);
 
-	CHECK(t1 && t2 && x && y, NULL);
+	RAISE(t1 && t2 && x && y, NULL);
 
 	switch (node->t)
 	{
@@ -156,7 +156,7 @@ LLVMValueRef il_create_binop(binop_node_t* node)
 		case BINOP_MUL:
 			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "mul");
 		case BINOP_DIV:
-			return is_floating ? LLVMBuildFMul(build, x, y, "fMultmp") : LLVMBuildMul(build, x, y, "mul");
+			return is_floating ? LLVMBuildFDiv(build, x, y, "fCivtmp") : (is_signed ? LLVMBuildSDiv(build, x, y, "sdiv") : LLVMBuildUDiv(build, x, y, "udiv"));
 		case BINOP_SML:
 		{
 			if (is_floating)
@@ -192,7 +192,7 @@ LLVMModuleRef il_create_program(program_node_t* node)
 	for (size_t i = 0; i < s; ++i)
 	{
 		ast_ptr inst = ast_vec_at(node->v, i);
-		CHECK(il_create_ast(inst), NULL);
+		RAISE(il_create_ast(inst), NULL);
 	}
 	var_scope_leave(sc);
 
@@ -209,8 +209,7 @@ LLVMBasicBlockRef il_create_block(block_node_t* node)
 	{
 		ast_ptr inst = ast_vec_at(node->v, i);
 		LLVMValueRef llvm_inst = il_create_ast(inst);
-		if (! llvm_inst)
-			return NULL;
+		RAISE(llvm_inst, NULL);
 	}
 	var_scope_leave(sc);
 
@@ -222,7 +221,7 @@ LLVMValueRef il_create_return(return_node_t* node)
 	assert(node);
 
 	LLVMValueRef ret = il_create_ast(node->exp);
-	CHECK(ret, NULL);
+	RAISE(ret, NULL);
 
 	return LLVMBuildRet(build, ret);
 }
@@ -290,26 +289,28 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 	for (size_t	i = 0; i < args_s; ++i)
 	{
 		var_decl_node_t* var_decl = var_decl_vec_at(node->args, i);
-		CHECK(args_t[i] = il_create_type(var_decl->type), NULL);
+		RAISE(args_t[i] = il_create_type(var_decl->type), NULL);
 	}
 	ret_t = il_create_type(node->type);
 
 	LLVMTypeRef fun_t = LLVMFunctionType(ret_t, args_t, args_s, 0);
 	LLVMValueRef fun = LLVMAddFunction(mod, node->name->str, fun_t);
-	free(args_t);
+
+	var_scope_enter(sc);
+	// BODY
+	LLVMBasicBlockRef block = LLVMAppendBasicBlockInContext(con, fun, "entry");
+	LLVMPositionBuilderAtEnd(build, block);
 
 	for	(size_t i = 0; i < args_s; ++i)
 	{
 		LLVMValueRef arg = LLVMGetParam(fun, i);
 		var_decl_node_t* arg_decl = var_decl_vec_at(node->args, i);
-		char const* arg_name = arg_decl->name->str;
+		LLVMTypeRef type = cast_llvm_from_resolved(con, arg_decl->type->r_type);
+		LLVMValueRef alloc = LLVMBuildAlloca(build, type, "arg");
 
-		LLVMSetValueName(arg, arg_name);
+		LLVMBuildStore(build, arg, alloc);
+		var_scope_add(sc, var_new(arg_decl->name->str, alloc));
 	}
-
-	// BODY
-	LLVMBasicBlockRef block = LLVMAppendBasicBlockInContext(con, fun, "entry");
-	LLVMPositionBuilderAtEnd(build, block);
 
 	LLVMBasicBlockRef body = il_create_block(node->code);
 	if (! body)
@@ -318,12 +319,8 @@ LLVMValueRef il_create_fun_decl(fun_decl_node_t* node)
 		return NULL;
 	}
 
-	if (LLVMVerifyFunction(fun, LLVMPrintMessageAction))
-	{
-		LLVMDeleteFunction(fun);
-		return NULL;
-	}
-
+	free(args_t);
+	var_scope_leave(sc);
 	return fun;
 }
 
@@ -331,54 +328,121 @@ LLVMValueRef il_create_fun_call(fun_call_node_t* node)
 {
 	assert(node);
 
-	return NULL;
+	size_t s = ast_vec_size(node->args);
+	LLVMValueRef fun = LLVMGetNamedFunction(mod, node->name->str);
+	LLVMValueRef* args = (LLVMValueRef*)malloc(sizeof(LLVMValueRef) *s);
+	assert(fun && args);
+
+	for (size_t i = 0; i < s; ++i)
+		assert(args[i] = il_create_ast(ast_vec_at(node->args, i)));
+
+	LLVMValueRef ret = LLVMBuildCall(build, fun, args, s, "call");
+	free(args);
+	return ret;
 }
 
 LLVMValueRef il_create_if(if_node_t* node)
 {
 	assert(node);
 
-		LLVMValueRef cond = il_create_ast(node->cond);
-		CHECK(cond, NULL);
+	LLVMValueRef cond = il_create_ast(node->cond);
+	assert(cond);
 
-		LLVMBasicBlockRef true_block, false_block, end_block;
-		{
-			LLVMValueRef function = LLVMGetBasicBlockParent(LLVMGetInsertBlock(build));
-			true_block = LLVMAppendBasicBlockInContext(con, function, "if_true");
-			false_block = LLVMAppendBasicBlockInContext(con, function, "if_false");
-			end_block = LLVMAppendBasicBlockInContext(con, function, "if_resume");
-		}
+	LLVMBasicBlockRef true_block, false_block, end_block;
+	{
+		LLVMValueRef function = LLVMGetBasicBlockParent(LLVMGetInsertBlock(build));
+		true_block = LLVMAppendBasicBlockInContext(con, function, "if_true");
+		false_block = LLVMAppendBasicBlockInContext(con, function, "if_false");
+		end_block = LLVMAppendBasicBlockInContext(con, function, "if_resume");
+	}
 
-		LLVMValueRef cmp = LLVMBuildICmp(build, LLVMIntNE, cond, LLVMConstNull(LLVMTypeOf(cond)), "if");
-		LLVMValueRef ret = LLVMBuildCondBr(build, cmp, true_block, false_block);
-		CHECK(true_block && false_block && end_block && cmp && ret, NULL);
+	LLVMValueRef cmp = LLVMBuildICmp(build, LLVMIntNE, cond, LLVMConstNull(LLVMTypeOf(cond)), "if");
+	LLVMValueRef ret = LLVMBuildCondBr(build, cmp, true_block, false_block);
+	assert(true_block && false_block && end_block && cmp && ret);
 
-		{
-			LLVMPositionBuilderAtEnd(build, true_block);
-			true_block = il_create_block(node->true_node);					// required
-			LLVMBuildBr(build, end_block);
-		}{
-			LLVMPositionBuilderAtEnd(build, false_block);
-			false_block = il_create_block(node->else_node);					// required
-			LLVMBuildBr(build, end_block);
-		}
+	{
+		LLVMPositionBuilderAtEnd(build, true_block);
+		true_block = il_create_block(node->true_node);					// required
+		LLVMBuildBr(build, end_block);
+	}{
+		LLVMPositionBuilderAtEnd(build, false_block);
+		false_block = il_create_block(node->else_node);					// required
+		LLVMBuildBr(build, end_block);
+	}
 
-		LLVMPositionBuilderAtEnd(build, end_block);
-		return ret;
+	LLVMPositionBuilderAtEnd(build, end_block);
+	return ret;
 }
 
 LLVMValueRef il_create_while(while_node_t* node)
 {
 	assert(node);
 
+	LLVMBasicBlockRef cond_block, true_block, end_block;
+	{
+		LLVMValueRef fun = LLVMGetBasicBlockParent(LLVMGetInsertBlock(build));
+		cond_block	= LLVMAppendBasicBlockInContext(con, fun, "while_cond");
+		true_block	= LLVMAppendBasicBlockInContext(con, fun, "while_true");
+		end_block	= LLVMAppendBasicBlockInContext(con, fun, "while_resume");
+	}
 
+	LLVMBuildBr(build, cond_block);
+	{
+		LLVMPositionBuilderAtEnd(build, cond_block);
 
-	return NULL;
+		LLVMValueRef cond = il_create_ast(node->cond);
+		LLVMValueRef cmp = LLVMBuildICmp(build, LLVMIntNE, cond, LLVMConstNull(LLVMTypeOf(cond)), "while");
+		LLVMValueRef ret = LLVMBuildCondBr(build, cmp, true_block, end_block);
+		assert(true_block && end_block && cmp && ret);
+	}{
+		LLVMPositionBuilderAtEnd(build, true_block);
+
+		true_block = il_create_block(node->true_node);
+		LLVMBuildBr(build, cond_block);
+	}
+
+	LLVMPositionBuilderAtEnd(build, end_block);
+	return (LLVMValueRef)1;
 }
 
 LLVMValueRef il_create_for(for_node_t* node)
 {
 	assert(node);
 
-	return NULL;
+	LLVMBasicBlockRef init_block, cond_block, inc_block, true_block, end_block;
+	{
+		LLVMValueRef fun = LLVMGetBasicBlockParent(LLVMGetInsertBlock(build));
+		init_block	= LLVMAppendBasicBlockInContext(con, fun, "for_init");
+		cond_block	= LLVMAppendBasicBlockInContext(con, fun, "for_cond");
+		inc_block	= LLVMAppendBasicBlockInContext(con, fun, "for_inc");
+		true_block	= LLVMAppendBasicBlockInContext(con, fun, "for_true");
+		end_block	= LLVMAppendBasicBlockInContext(con, fun, "for_resume");
+	}
+
+	LLVMBuildBr(build, init_block);
+	{
+		LLVMPositionBuilderAtEnd(build, init_block);
+
+		RAISE(il_create_ast(node->init), NULL);
+		LLVMBuildBr(build, cond_block);
+	}{
+		LLVMPositionBuilderAtEnd(build, cond_block);
+
+		LLVMValueRef cond = il_create_ast(node->cond);
+		LLVMValueRef cmp = LLVMBuildICmp(build, LLVMIntNE, cond, LLVMConstNull(LLVMTypeOf(cond)), "for");
+		LLVMBuildCondBr(build, cmp, true_block, end_block);
+	}{
+		LLVMPositionBuilderAtEnd(build, true_block);
+
+		RAISE(true_block = il_create_block(node->block), NULL);
+		LLVMBuildBr(build, inc_block);
+	}{
+		LLVMPositionBuilderAtEnd(build, inc_block);
+
+		RAISE(il_create_ast(node->inc), NULL);
+		LLVMBuildBr(build, cond_block);
+	}
+
+	LLVMPositionBuilderAtEnd(build, end_block);
+	return (LLVMValueRef)1;
 }

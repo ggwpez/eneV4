@@ -1,7 +1,7 @@
 CONFIG -= qt c++
-QMAKE_LIBS +=-lfl -ly -rdynamic `llvm-config --system-libs --libs passes`
-QMAKE_LFLAGS += `llvm-config --ldflags`
-QMAKE_CFLAGS +=-std=c11 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
+QMAKE_LIBS +=-lfl -ly `llvm-config --system-libs --libs passes`
+QMAKE_LFLAGS +=-fmax-errors=5 -fuse-ld=gold `llvm-config --ldflags`
+QMAKE_CFLAGS +=-fmax-errors=5 -DYYDEBUG=1 -DYYERROR_VERBOSE=1 `llvm-config --cflags`
 
 QMAKE_CFLAGS_WARN_ON +=-Wall -Wextra -Wpedantic -Wunused-result -Wunused -Wno-implicit-function-declaration -Wno-parentheses -Wno-sign-compare -Wno-date-time
 FLEXSOURCES = src/lexer.l
@@ -44,7 +44,8 @@ SOURCES += \
 	src/back_end/var.c \
 	src/back_end/var_scope.c \
 	src/back_end/var_scope_entry.c \
-	src/mid_end/scoper_inbuild.c
+	src/mid_end/scoper_inbuild.c \
+	src/errors.c
 
 TEMPLATE = app
 
@@ -82,7 +83,6 @@ HEADERS += \
 	src/ast/binop_node.h \
 	src/ast/unop_node.h \
 	src/ast/common.h \
-	src/vector.h \
 	src/ast/for_node.h \
 	src/ast/var_decl_node.h \
 	src/ast/ident_node.h \
@@ -111,4 +111,6 @@ HEADERS += \
 	src/back_end/var_scope.h \
 	src/back_end/var_scope_entry.h \
 	src/mid_end/scoper_inbuild.h \
-    src/compiler_args.h
+	src/compiler_args.h \
+	src/vector.h \
+	src/enums.h

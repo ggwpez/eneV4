@@ -194,6 +194,7 @@ exp: exp_stack
 		crash("Expression returning more than one value");
 
 	$$ = ast_vec_pop_back($1);	// delete $1
+	ast_vec_del($1);
 }
 
 exp_stack: term
