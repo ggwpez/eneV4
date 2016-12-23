@@ -46,7 +46,7 @@ r_type_t* cast_add_const(r_type_t* t, bool make_cpy)
 	assert(t);
 
 	r_type_t* cpy = make_cpy ? r_type_cpy(t) : t;
-	return r_type_new(R_TYPE_MOD_CONST, NULL, cpy);
+	return r_type_new(R_TYPE_MOD_CONST, NULL, cpy, -1);
 }
 
 r_type_t* cast_add_ptr(r_type_t* t, bool make_cpy)
@@ -54,7 +54,15 @@ r_type_t* cast_add_ptr(r_type_t* t, bool make_cpy)
 	assert(t);
 
 	r_type_t* cpy = make_cpy ? r_type_cpy(t) : t;
-	return r_type_new(R_TYPE_MOD_PTR, NULL, cpy);
+	return r_type_new(R_TYPE_MOD_PTR, NULL, cpy, -1);
+}
+
+r_type_t* cast_add_arr(r_type_t* t, size_t arr_size, bool make_cpy)
+{
+	assert(t);
+
+	r_type_t* cpy = make_cpy ? r_type_cpy(t) : t;
+	return r_type_new(R_TYPE_MOD_ARRAY, NULL, cpy, arr_size);
 }
 
 r_type_t* cast_drop_const(r_type_t* t, bool make_cpy)
@@ -72,6 +80,16 @@ r_type_t* cast_drop_ptr(r_type_t* t, bool make_cpy)
 	assert(t);
 
 	if (! trait_is_ptr(t))
+		return make_cpy ? r_type_cpy(t) : t;
+	else
+		return make_cpy ? r_type_cpy(t->sub) : t->sub;
+}
+
+r_type_t* cast_drop_arr(r_type_t* t, bool make_cpy)
+{
+	assert(t);
+
+	if (! trait_is_arr(t))
 		return make_cpy ? r_type_cpy(t) : t;
 	else
 		return make_cpy ? r_type_cpy(t->sub) : t->sub;

@@ -13,7 +13,7 @@ scope_t* scope_new()
 void scope_del(scope_t* obj)
 {
 	assert(obj);
-	assert(! context_vec_size(obj->contexts));		// RAISE whether all contexts are left
+	assert(! context_vec_size(obj->contexts));		// check whether all contexts are left
 
 	context_vec_del(obj->contexts);
 	free(obj);
@@ -95,17 +95,28 @@ r_type_t* scope_resolve_ur_type(scope_t* obj, ur_type_t* type)
 		if (! new_sub)
 			return NULL;
 
-		return r_type_new((r_type_mod_t)type->mod, NULL, new_sub);		// this cast is assumed safe
+		return r_type_new((r_type_mod_t)type->mod, NULL, new_sub, -1);		// this cast is assumed safe
 	}
-	else //if (type->mod == UR_TYPE_MOD_ID)
+	else if (type->mod == UR_TYPE_MOD_ID)
 	{
 		inbuild_type_t* new_sub = inbuild_type_resolve(type->id);
 
 		if (! new_sub)
 			return NULL;
 
-		return r_type_new(R_TYPE_MOD_INBUILD, new_sub, NULL);
+		return r_type_new(R_TYPE_MOD_INBUILD, new_sub, NULL, -1);
 	}
+	else if (type->mod == UR_TYPE_MOD_ARRAY)
+	{
+		r_type_t* new_sub = scope_resolve_ur_type(obj, type->sub);
+
+		if (! new_sub)
+			return NULL;
+
+		return r_type_new((r_type_mod_t)type->mod, NULL, new_sub, type->arr_size);		// this cast is assumed safe
+	}
+	else
+		PANIC;
 	// Add here for struct types
 }
 
@@ -117,7 +128,7 @@ r_type_t* scope_resolve_inbuild_str(scope_t* obj, char const* name)
 	inbuild_type_t* it = inbuild_type_resolve_str(name);
 
 	if (! it) return NULL;
-	return new(r_type, R_TYPE_MOD_INBUILD, it, NULL);
+	return new(r_type, R_TYPE_MOD_INBUILD, it, NULL, -1);
 }
 
 error_t scope_transform_type(scope_t* obj, type_node_t* node)

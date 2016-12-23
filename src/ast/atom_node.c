@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+MAKE_ENUM_STRINGS(atom, ATOM_ENUM)
+
 ast_ptr atom_new(atom_t t, void const* value)
 {
 	define_ptr(atom_node_t, ret);
@@ -9,6 +11,9 @@ ast_ptr atom_new(atom_t t, void const* value)
 
 	switch (t)
 	{
+		case ATOM_STR:
+			ret->str = strdup((char const*)value);
+			break;
 		case ATOM_BOOL:
 			ret->boolean = (bool)value;
 			break;
@@ -58,6 +63,8 @@ void atom_del(atom_node_t* val)
 {
 	assert(val);
 
+	if (val->t == ATOM_STR)
+		free(val->str);
 	val->t = ATOM_size;
 
 	free(val);
@@ -75,6 +82,8 @@ void atom_print(atom_node_t* val)
 		printf("<float=%f>", val->f32);
 	else if (val->t == ATOM_DOUBLE)
 		printf("<float=%f>", val->f64);
+	else if (val->t == ATOM_STR)
+		printf("<str=%s>", val->str);
 	else if (val->t == ATOM_REF_TO_RES)
 		printf("<&top>");
 	else

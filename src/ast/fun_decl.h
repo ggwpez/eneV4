@@ -11,7 +11,11 @@ typedef struct fun_decl_node
 {
 	type_node_t* type;
 	ident_node_t* name;
-	block_node_t* code;
+	union
+	{
+		void* has_implementation;
+		block_node_t* code;
+	};
 	var_decl_vec_t* args;
 } fun_decl_node_t;
 

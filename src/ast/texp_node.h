@@ -1,24 +1,25 @@
 #pragma once
 
 #include "ast.h"
+#include "../enums.h"
 #include "../mid_end/r_type.h"
 
-typedef enum texp_cast
-{
-	CAST_TRUNC = 30,
-	CAST_Z_EXT,
-	CAST_S_EXT,
-	CAST_FP_TO_UI,
-	CAST_FP_TO_SI,
-	CAST_UI_TO_FP,
-	CAST_SI_TO_FP,
-	CAST_FP_TRUNC,
-	CAST_FP_EXT,
-	CAST_PTR_TO_INT,
-	CAST_INT_TO_PTR,
-	CAST_BITCAST,
-	CAST_size
-} texp_cast_t;
+#define CAST_ENUM	(CAST_TRUNC = 30)\
+					(CAST_Z_EXT)\
+					(CAST_S_EXT)\
+					(CAST_FP_TO_UI)\
+					(CAST_FP_TO_SI)\
+					(CAST_UI_TO_FP)\
+					(CAST_SI_TO_FP)\
+					(CAST_FP_TRUNC)\
+					(CAST_FP_EXT)\
+					(CAST_PTR_TO_INT)\
+					(CAST_INT_TO_PTR)\
+					(CAST_BITCAST)\
+					(CAST_TO_BOOL)\
+					(CAST_BOOL_INT)\
+					(CAST_size)
+MAKE_ENUM(texp_cast, CAST_ENUM)
 
 typedef struct texp_node
 {

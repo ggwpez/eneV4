@@ -15,6 +15,8 @@ type_size_t trait_sizeof(r_type_t* t)
 		return TS_PTR;
 	else if (trait_is_void(t))
 		return 0;
+	else if (trait_is_arr(t))
+		return trait_sizeof(t->sub) *t->arr_size;
 	else
 		PANIC
 }
@@ -47,11 +49,47 @@ bool trait_is_same(r_type_t* t1, r_type_t* t2)
 		return false;
 }
 
+typedef bool(*trait_ptr)(r_type_t*);
+typedef struct
+{
+	trait_ptr proposition;
+	trait_ptr conclusion[5];
+} ctuple_t;
+
+ctuple_t castable_table[] = {
+								{ trait_is_const, { trait_is_const, trait_is_void } },
+								{ trait_is_integral, { trait_is_arithmetic, trait_is_void } },
+								{ trait_is_ptr, { trait_is_ptr, trait_is_integral, trait_is_void } },
+								{ trait_is_bool, { trait_is_bool, trait_is_void } },
+								{ trait_is_arr, { trait_is_arr, trait_is_ptr, trait_is_void } },
+								{ trait_is_void, { trait_is_void } },
+								{ trait_is_incomplete, { trait_is_void } }
+							};
+
 bool trait_is_castable_to(r_type_t* t1, r_type_t* t2)
 {
 	assert(t1);
 	assert(t2);
 
+	bool found = false;
+	size_t i, j;
+	for (i = 0; i < _countof(castable_table); ++i)
+	{
+		if (castable_table[i].proposition(t1))
+		{
+			found = true;
+			for (j = 0; j < 5; ++j)
+			{
+				if (castable_table[i].conclusion[j] && castable_table[i].conclusion[j](t2))
+					break;
+			}
+		}
+		if (j == 5)
+			return false;
+	}
+
+	if (! found)
+		return fprintf(stderr, "%s", "Forgot castable-case for: "), r_type_pprint(t1), putc('\n', stderr);
 	return true;
 }
 
@@ -72,6 +110,13 @@ bool trait_is_ptr(r_type_t* t)
 	assert(t);
 
 	return t->mod == R_TYPE_MOD_PTR;
+}
+
+bool trait_is_arr(r_type_t* t)
+{
+	assert(t);
+
+	return t->mod == R_TYPE_MOD_ARRAY;
 }
 
 bool trait_is_stack_top(r_type_t* t)
@@ -102,6 +147,11 @@ bool trait_is_floating(r_type_t* t)
 	return trait_is_plain_inbuild(t) && t->inbuild->is_floating;
 }
 
+bool trait_is_bool(r_type_t* t)
+{
+	return trait_is_plain_inbuild(t) && (t->inbuild->type == IT_BOOL);
+}
+
 bool trait_is_signed(r_type_t* t)
 {
 	assert(t);
@@ -130,5 +180,6 @@ bool trait_is_plain_inbuild(r_type_t* t)
 {
 	assert(t);
 
-	return t->mod == R_TYPE_MOD_INBUILD;
+	return t->mod == R_TYPE_MOD_INBUILD
+			|| (t->mod == R_TYPE_MOD_CONST && trait_is_plain_inbuild(t->sub));
 }

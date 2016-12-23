@@ -45,9 +45,3 @@ int main(int argc, char** argv)
 
 	return compile_file(&args);
 }
-
-void yyerror(char const* s)
-{
-	fprintf(stderr, "YYERROR: %s\n", s);
-	exit(1);
-}

@@ -4,14 +4,14 @@
 #include "src/ast/common.h"
 
 #include "y.tab.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 void crash(char const* msg)
 {
-	fprintf(stderr, "%s\n", msg);
+	fprintf(stderr, "Parser halted at %d:%d with msg: %s\n", yylloc.first_line, yylloc.first_column, msg);
 	exit(1);
 }
 
@@ -22,6 +22,7 @@ extern program_node_t* prog;
 %union {
 	int64_t ival;
 	u_int64_t uval;
+
 	float fval;
 	double dval;
 	char* str;
@@ -40,19 +41,22 @@ extern program_node_t* prog;
 %token<uval> T_UINT
 %token<fval> T_FLOAT
 %token<dval> T_DOUBLE
-%token<str> T_ID
+%token<str> T_ID T_STR
 %token T_EQU T_NOT T_POP T_CPY T_DRF
 %token T_ASS T_DDOT
-%token T_ADD T_SUB T_MUL T_DIV T_SML T_GRT T_AND T_OR
-%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI T_PTR T_CONST
+%token T_ADD T_SUB T_MUL T_DIV T_SML T_GRT T_AND T_OR T_HASH
+%token T_BO T_BC T_EBO T_EBC T_CBO T_CBC T_SEMI
+%token T_PTR T_CONST T_BS
 %token T_WHILE T_FOR T_IF T_NSPACE T_ELSE T_BREAK T_GOON T_RETURN T_STRUCT
 %token T_NEWLINE T_QUIT T_UNKNOWN T_EOF
 %token T_TRUE T_FALSE
+
+%locations
 %right T_SEQ
 
 %type<prog> program program_content
 %type<node>	program_stmt
-%type<block> block block_content
+%type<block> block non_empty_block block_content
 %type<node> block_stmt
 %type<node> exp
 %type<ast_vec> exp_stack
@@ -93,13 +97,15 @@ program_content: { $$ = new_ng(program,); }
 }
 
 program_stmt:
-			T_NEWLINE { $$ = NULL; }
-			| var_decl T_SEMI
+			var_decl T_SEMI
 			| fun_decl
+
+non_empty_block:
+		T_CBO block_content T_CBC { $$ = $2; }
 
 block:
 		T_SEMI { $$ = new_ng(block,); }
-		| T_CBO block_content T_CBC { $$ = $2; }
+		| non_empty_block
 
 block_content: { $$ = new_ng(block,); }
 | block_content block_stmt
@@ -111,8 +117,7 @@ block_content: { $$ = new_ng(block,); }
 }
 
 block_stmt:
-		T_NEWLINE { $$ = NULL; }
-		| T_RETURN exp T_SEMI { $$ = new(return, $2); }
+		T_RETURN exp T_SEMI { $$ = new(return, $2); }
 		| exp T_SEMI
 		| var_decl T_SEMI
 		| if_stmt
@@ -123,9 +128,10 @@ ident:
 		T_ID					{ $$ = new_ng(ident, $1, true); }
 
 ur_type:
-		ident					{ $$ = new_ng(ur_type, UR_TYPE_MOD_ID, $1, NULL); }
-		| ur_type T_PTR			{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1); }
-		| ur_type T_CONST		{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1); }
+		ident						{ $$ = new_ng(ur_type, UR_TYPE_MOD_ID, $1, NULL, -1); }
+		| ur_type T_PTR				{ $$ = new_ng(ur_type, UR_TYPE_MOD_PTR, NULL, $1, -1); }
+		| ur_type T_CONST			{ $$ = new_ng(ur_type, UR_TYPE_MOD_CONST, NULL, $1, -1); }
+		| ur_type T_BS T_UINT		{ $$ = new_ng(ur_type, UR_TYPE_MOD_ARRAY, NULL, $1, $3); }
 
 type: ur_type T_DDOT			{ $$ = new_ng(type, $1); }
 
@@ -149,7 +155,9 @@ f_arg_list:         { $$ = new_ng(var_decl_vec, 0); }
 	var_decl_vec_push_back(list, $3);
 }
 fun_decl:
-		type ident T_BO f_arg_list T_BC block     { $$ = new(fun_decl, $1, $2, $6, $4); }
+		type ident T_BO f_arg_list T_BC T_SEMI				{ $$ = new(fun_decl, $1, $2, NULL, $4); }
+		| type ident T_BO f_arg_list T_BC non_empty_block	{ $$ = new(fun_decl, $1, $2, $6, $4); }
+
 
 fun_call_args: { $$ = new_ng(ast_vec, 0); } | fun_call_args_content
 fun_call_args_content:
@@ -281,8 +289,9 @@ term:
    | cast
 
 atom:
-	T_TRUE		{ $$ = new(atom, ATOM_BOOL, &prog); }	// just pass a non null ptr
-	| T_FALSE	{ $$ = new(atom, ATOM_BOOL, NULL); }
+	T_STR			{ $$ = new(atom, ATOM_STR, $1); }
+	| T_TRUE		{ $$ = new(atom, ATOM_BOOL, &prog); }	// just pass a non null ptr
+	| T_FALSE		{ $$ = new(atom, ATOM_BOOL, NULL); }
 	| T_SINT
 {
 
@@ -324,6 +333,7 @@ un_term:
 
 bin_term:
 	T_EQU				{ $$ = new(binop, BINOP_EQU, NULL, NULL); }
+	| T_HASH			{ $$ = new(binop, BINOP_ARR, NULL, NULL); }
 	| T_ASS				{ $$ = new(binop, BINOP_ASS, NULL, NULL); }
 	| T_ADD				{ $$ = new(binop, BINOP_ADD, NULL, NULL); }
 	| T_SUB				{ $$ = new(binop, BINOP_SUB, NULL, NULL); }

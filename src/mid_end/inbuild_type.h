@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../ast/ident_node.h"
-#include "stdint.h"
+#include "../enums.h"
+#include <stdint.h>
 
 /* *
  * LSB is the size in byte
@@ -10,27 +11,22 @@
  * 9. Bit:
  *		1 on Floating
  * */
-typedef enum inbuild
-{
-	IT_STACK_TOP,
-	IT_VOID,
-	IT_BOOL,
-	IT_U8,
-	IT_U16,
-	IT_U32,
-	IT_U64,
-	IT_I8,
-	IT_I16,
-	IT_I32,
-	IT_I64,
+#define INBUILD_ENUM	(IT_STACK_TOP)\
+						(IT_VOID)\
+						(IT_BOOL)\
+						(IT_U8)\
+						(IT_U16)\
+						(IT_U32)\
+						(IT_U64)\
+						(IT_I8)\
+						(IT_I16)\
+						(IT_I32)\
+						(IT_I64)\
+						(IT_F32)\
+						(IT_F64)\
+						(IT_size)
+MAKE_ENUM(inbuild, INBUILD_ENUM)
 
-	//IT_F16,
-	IT_F32,
-	IT_F64,
-	IT_size
-} inbuild_t;
-
-// Translator
 // is_floating => is_signed
 typedef struct inbuild_type
 {

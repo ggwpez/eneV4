@@ -1,6 +1,8 @@
 #include "texp_node.h"
 #include <stdio.h>
 
+MAKE_ENUM_STRINGS(texp_cast, CAST_ENUM)
+
 ast_ptr texp_new(ast_ptr exp, r_type_t* type)
 {
 	return new(ast, AST_TEXP, texp_new_ng(exp, type));
@@ -34,6 +36,7 @@ void texp_print(texp_node_t* node)
 
 	printf("<texp("),
 		ast_print(node->exp), putchar(','),
+		printf("%s", texp_cast_strings[(int)node->cast_type]),
 		r_type_print(node->type),
 	printf(")>");
 }

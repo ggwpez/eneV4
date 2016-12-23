@@ -6,6 +6,25 @@
 #define YY_DECL int yylex()
 
 #include "y.tab.h"
+#define YY_USER_ACTION \
+yylloc.first_line = yylloc.last_line; \
+yylloc.first_column = yylloc.last_column; \
+for(int i = 0; yytext[i]; i++)\
+{ \
+	if(yytext[i] == '\n')\
+	{ \
+		yylloc.last_line++; \
+		yylloc.last_column = 0; \
+	} \
+	else\
+		yylloc.last_column++;\
+}
+
+void yyerror(char const* s)
+{
+	fprintf(stderr, "Lexing halted at %d:%d with msg: %s\n", yylloc.first_line, yylloc.first_column, s);
+	exit(1);
+}
 
 %}
 
@@ -14,6 +33,7 @@
 %option nounput
 /* to avoid warning: ‘input’ defined but not used */
 %option noinput
+%option yylineno
 
 %%
 
@@ -22,6 +42,7 @@
 [0-9]+\.[0-9]+		{ yylval.fval = atof(yytext); return T_FLOAT; }
 "-"[0-9]+			{ yylval.ival = atoi(yytext); return T_SINT; }
 [0-9]+				{ yylval.uval = atoi(yytext); return T_UINT; }
+\"(\\.|[^"])*\"		{ yylval.str = strdup(yytext); return T_STR; }
 	/* BINOP */
 "?"		{ return T_EQU; }
 "+"		{ return T_ADD; }
@@ -32,6 +53,7 @@
 ">"		{ return T_GRT; }
 "&"		{ return T_AND; }
 "|"		{ return T_OR; }
+"#"		{ return T_HASH; }
 	/* UNOP */
 "!"		{ return T_NOT; }
 "^"		{ return T_POP; }
@@ -66,6 +88,8 @@
 	/* TYPE MODS */
 "'"         { return T_PTR; }
 "const"     { return T_CONST; }
+"\\"	{ return T_BS; }
+
 [_a-zA-Z][_a-zA-Z0-9]* { yylval.str = strdup(yytext); return T_ID; }
 
 <<EOF>>		{ return T_EOF; }

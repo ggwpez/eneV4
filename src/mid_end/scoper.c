@@ -4,14 +4,13 @@
 #include "trait.h"
 #include <limits.h>
 
-MAKE_VTABLE_C(ast_visits, scoper_transform_, ast_transform_ptr_t)
+MAKE_VTABLE_C(ast_visits, scoper_transform_,, ast_transform_ptr_t)
 static bool ast_transformable[] = {	1, 1, 1,
 									0, 0, 0,
 									1, 0, 1, 1,
 									0, 0, 1,
 									0, 0, 0 };
 
-static_assert(_countof(ast_visits       ) == AST_size, "_countof(ast_visits   ) == AST_size");
 static_assert(_countof(ast_transformable) == AST_size, "_countof(ast_transform) == AST_size");
 
 static r_type_t* f_ret_type = NULL;
@@ -114,8 +113,8 @@ error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
 	// TODO make unsigned to signed on negation
 	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
 
-	if (!trait_is_arithmetic(x->type))
-		return fprintf(stderr, "%s\n", "Binary operators can only be applied to [trait_is_arithmetic(t1)] for all t1"), SC_OVERLOAD_FAULT;
+	//if (!trait_is_arithmetic(x->type))
+		//return fprintf(stderr, "%s\n", "Binary operators can only be applied to [trait_is_arithmetic(t1)] for all t1"), SC_OVERLOAD_FAULT;
 
 	r_type_t* nt = NULL;
 
@@ -126,6 +125,10 @@ error_t scoper_transform_unop(scope_t* sc, ast_ptr* ast, unop_node_t *node)
 				return fprintf(stderr, "%s\n", "Operator: '~' can only be applied to trait_is_ptr(t1) for any t1"), SC_BAD_TYPE_CAST;
 			nt = cast_drop_ptr(x->type, true);
 			break;
+		case UNOP_NOT:
+			if (! trait_is_integral(x->type) && ! trait_is_bool(x->type))
+				return fprintf(stderr, "%s\n", "Operator: '!' can only be applied to [trait_is_integral(t1) || trait_is_bool(t1)] for any t1"), SC_BAD_TYPE_CAST;
+			//break;
 		default:
 			nt = r_type_cpy(x->type);
 	}
@@ -145,13 +148,10 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 
 	if (trait_is_same(t1, t2))
 		return SUCCESS;
-	RAISE(trait_is_castable_to(t1, t2), SC_BAD_TYPE_CAST);
+	CHECK(trait_is_castable_to(t1, t2), SC_BAD_TYPE_CAST,);
 
 	if (trait_is_ptr(t1) && trait_is_ptr(t2))	// does this require recursion?
 		return scoper_create_texp_cast(parent, node, t2->sub);
-
-	if (trait_is_void(t1))						// void -> T
-		return fprintf(stderr, "%s\n", "[void] cant be casted to [! trait_is_void(T)] for all T"), SC_BAD_TYPE_CAST;
 
 	size_t s1 = trait_sizeof(t1),
 		   s2 = trait_sizeof(t2);
@@ -160,6 +160,8 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 
 	if (trait_is_void(t2))				// T -> void
 		;
+	//else if (trait_is_bool(t2))			// T -> bool
+		//cast_type = trait_is_bool(t1) ? CAST_size : CAST_TO_BOOL;
 	else if (trait_is_integral(t1))
 	{
 		if (trait_is_integral(t2))		// int -> int
@@ -203,10 +205,21 @@ error_t scoper_create_texp_cast(ast_ptr* parent, texp_node_t* node, r_type_t* t2
 		else
 			PANIC
 	}
+	/*else if (trait_is_bool(t1))
+	{
+		if (trait_is_floating(t2))		// bool -> float
+			return fprintf(stderr, "%s\n", "Cast from trait_is_bool(T1) to trait_is_floating(T2) is illegal for all T1, T2"), SC_BAD_TYPE_CAST;
+		else if (trait_is_integral(t2))	// bool -> int
+			cast_type = CAST_BOOL_INT;
+		else if (trait_is_ptr(t2))		// bool -> T'
+			return fprintf(stderr, "%s\n", "Cast from trait_is_bool(T1) to trait_is_ptr(T2) is illegal for all T1, T2"), SC_BAD_TYPE_CAST;
+	}*/
 	else if (trait_is_void(t1))
 		return SC_BAD_TYPE_CAST;
 	else
 		PANIC
+
+	assert(! (cast_type == CAST_size ^ ! trait_is_castable_to(t1, t2)));
 
 	texp_node_t* ret = new_ng(texp, *parent, r_type_cpy(t2));
 	ret->cast_type = cast_type;
@@ -242,6 +255,14 @@ error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 		*ast = new(texp, *ast, var_t);
 		return SUCCESS;
 	}
+	else if (node->t == BINOP_ARR)
+	{
+		if (! trait_is_arr(x->type) || ! trait_is_integral(y->type))
+			return fprintf(stderr, "Operator: '#' awaits [trait_is_arr(T1) trait_is_integral(T2)] for all T1, T2"), SC_OVERLOAD_FAULT;
+
+		*ast = new(texp, *ast, cast_drop_arr(x->type, true));
+		return SUCCESS;
+	}
 	else if (!trait_is_integral(x->type) || !trait_is_integral(y->type))	// no implicit casts, LLVM forbits it, maybe add later
 		return fprintf(stderr, "%s\n", "Binary arithmetic operators take [trait_is_arithmetic(T1) trait_is_arithmetic(T2)] for all T1, T2"), SC_OVERLOAD_FAULT;
 	else
@@ -249,7 +270,7 @@ error_t scoper_transform_binop(scope_t* sc, ast_ptr* ast, binop_node_t *node)
 		// TODO look here
 		r_type_t* nt = cast_common_type(x->type, y->type, true);
 
-		RAISE(nt, SC_BAD_TYPE_CAST);
+		CHECK(nt, SC_BAD_TYPE_CAST,);
 		CHECK_ERR(scoper_create_texp_cast(&node->x, x, nt));	// cast both to common type
 		CHECK_ERR(scoper_create_texp_cast(&node->y, y, nt));
 
@@ -326,7 +347,7 @@ error_t scoper_transform_ident(scope_t* sc, ast_ptr* ast, ident_node_t *node)
 	r_type_t* nt = NULL;
 	var_decl_node_t* decl = scope_get_var(sc, node);
 
-	RAISE(decl, (fprintf(stderr, "Var: '%s' undeclared", node->str), SC_VAR_NOT_FOUND));
+	CHECK(decl, (fprintf(stderr, "Var: '%s' undeclared", node->str), SC_VAR_NOT_FOUND),);
 	assert(nt = r_type_cpy(decl->type->r_type));
 
 	*ast = new(texp, *ast, nt);
@@ -354,7 +375,7 @@ error_t scoper_transform_cast(scope_t* sc, ast_ptr* ast, cast_node_t* node)
 	texp_node_t* x = assert_cast(node->node, texp_node_t*, AST_TEXP);
 	r_type_t* nt = scope_resolve_ur_type(sc, node->t);
 
-	RAISE(nt, SC_TRANSFORM_TYPE);
+	CHECK(nt, SC_TRANSFORM_TYPE,);
 	CHECK_ERR(scoper_create_texp_cast(&node->node, x, nt));	// TODO very ugly, also leaking node
 
 	{
@@ -373,43 +394,62 @@ error_t scoper_transform_var_decl(scope_t* sc, ast_ptr* ast, var_decl_node_t* no
 	assert(node);
 
 	CHECK_ERR(scope_transform_type(sc, node->type));
-	node->type->r_type = cast_add_ptr(node->type->r_type, false);
+	//if (! trait_is_arr(node->type->r_type))
+		node->type->r_type = cast_add_ptr(node->type->r_type, false);
 	CHECK_ERR(scope_add_var(sc, node));
 
 	return SUCCESS;
 }
 
 // Shut your eyes, spaghetti code ahead!
-error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t *node)
+error_t scoper_transform_fun_decl(scope_t* sc, ast_ptr* ast, fun_decl_node_t* node)
 {
 	(void)ast;
 	assert(node);
 
 	CHECK_ERR(scope_transform_type(sc, node->type));					// transform return	type
 	CHECK_ERR(scope_transform_vars(sc, node->args));					// transform arg	types
-	CHECK_ERR(scope_add_fun(sc, node));
 
-	{// Add pointers (needed in the block)
-		size_t s = var_decl_vec_size(node->args);
-		for (size_t i = 0; i < s; ++i)
+	fun_decl_node_t* found = NULL;
+	if (found = scope_get_fun(sc, node->name))
+	{
+		if (found->has_implementation)
 		{
-			var_decl_node_t* decl = var_decl_vec_at(node->args, i);
-			decl->type->r_type = cast_add_ptr(decl->type->r_type, true);
+			if (node->has_implementation)
+				return fprintf(stderr, "Function: '%s' implemented twice\n", node->name->str), SC_OVERLOAD_FAULT;
+			else
+				return SUCCESS;
 		}
+		else	// update it TODO check equality, because no overloading jet
+			memcpy(found, node, sizeof(fun_decl_node_t));	// TODO impure
 	}
+	else
+		CHECK_ERR(scope_add_fun(sc, node));
 
-	scope_enter(sc);
-	CHECK_ERR(scope_add_vars(sc, node->args));					// Add args
-	f_ret_type = node->type->r_type;
-	CHECK_ERR(scoper_transform_block(sc, NULL, node->code));
-	scope_leave(sc);
+	if (node->has_implementation)
+	{// Generate code
+		{// Add pointers (needed in the block)
+			size_t s = var_decl_vec_size(node->args);
+			for (size_t i = 0; i < s; ++i)
+			{
+				var_decl_node_t* decl = var_decl_vec_at(node->args, i);
+				decl->type->r_type = cast_add_ptr(decl->type->r_type, true);
+			}
+		}
 
-	{// Remove pointers, superfluous in back-end
-		size_t s = var_decl_vec_size(node->args);
-		for (size_t i = 0; i < s; ++i)
-		{
-			var_decl_node_t* decl = var_decl_vec_at(node->args, i);
-			decl->type->r_type = cast_drop_ptr(decl->type->r_type, true);
+		scope_enter(sc);
+		CHECK_ERR(scope_add_vars(sc, node->args));					// Add args
+		f_ret_type = node->type->r_type;
+		CHECK_ERR(scoper_transform_block(sc, NULL, node->code));
+		scope_leave(sc);
+
+		{// Remove pointers, superfluous in back-end
+			size_t s = var_decl_vec_size(node->args);
+			for (size_t i = 0; i < s; ++i)
+			{
+				var_decl_node_t* decl = var_decl_vec_at(node->args, i);
+				decl->type->r_type = cast_drop_ptr(decl->type->r_type, true);
+			}
 		}
 	}
 
@@ -451,8 +491,8 @@ error_t scoper_transform_if(scope_t* sc, ast_ptr* ast, if_node_t *node)
 
 	CHECK_ERR(scoper_transform_ast(sc, &node->cond));
 	r_type_t* t = trait_typeof(node->cond);
-	if (! trait_is_integral(t))
-		return fprintf(stderr, "If awaits an [trait_is_integral(T)] for any T"), SC_BAD_TYPE_CAST;
+	if (! trait_is_bool(t))
+		return fprintf(stderr, "If awaits an [trait_is_bool(T)] for any T"), SC_BAD_TYPE_CAST;
 
 	CHECK_ERR(scoper_transform_block(sc, NULL, node->true_node));
 	CHECK_ERR(scoper_transform_block(sc, NULL, node->else_node));

@@ -2,32 +2,26 @@
 
 #include "../defines.h"
 #include "../vector.h"
+#include "../enums.h"
 
-typedef enum ast_type
-{
-	AST_ATOM,
-	AST_UNOP,
-	AST_BINOP,
-
-	AST_PROGRAM,
-	AST_BLOCK,
-	AST_RETURN,
-
-	AST_IDENT,
-	AST_TYPE,
-	AST_TEXP,
-	AST_CAST,
-
-	AST_VAR_DECL,
-	AST_FUN_DECL,
-	AST_FUN_CALL,
-
-	AST_IF,
-	AST_WHILE,
-	AST_FOR,
-
-	AST_size
-} ast_type_t;
+#define AST_TYPE_ENUM	(AST_ATOM)\
+						(AST_UNOP)\
+						(AST_BINOP)\
+						(AST_PROGRAM)\
+						(AST_BLOCK)\
+						(AST_RETURN)\
+						(AST_IDENT)\
+						(AST_TYPE)\
+						(AST_TEXP)\
+						(AST_CAST)\
+						(AST_VAR_DECL)\
+						(AST_FUN_DECL)\
+						(AST_FUN_CALL)\
+						(AST_IF)\
+						(AST_WHILE)\
+						(AST_FOR)\
+						(AST_size)
+MAKE_ENUM(ast_type,	AST_TYPE_ENUM)
 
 typedef struct ast
 {

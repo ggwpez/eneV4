@@ -5,7 +5,6 @@ ast_ptr fun_decl_new(type_node_t* type, ident_node_t* name, block_node_t* code, 
 {
 	assert(type);
 	assert(name);
-	assert(code);
 	assert(args);
 	define_ptr(fun_decl_node_t, ret);
 
@@ -23,7 +22,8 @@ void fun_decl_del(fun_decl_node_t* node)
 
 	type_del(node->type);
 	ident_del(node->name);
-	block_del(node->code);
+	if (node->code)
+		block_del(node->code);
 	var_decl_vec_del(node->args);
 
 	free(node);
@@ -36,7 +36,8 @@ void fun_decl_print(fun_decl_node_t* node)
 	printf("<fun_decl("),
 		type_print(node->type), putchar(','),
 		ident_print(node->name), putchar(','),
-		var_decl_vec_print(node->args), putchar(','),
-		block_print(node->code),
+		var_decl_vec_print(node->args), putchar(',');
+	if (node->code)
+		block_print(node->code);
 	printf(")>");
 }

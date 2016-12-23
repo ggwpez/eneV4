@@ -20,8 +20,7 @@ int open_file(char const* in_file)
 	if (in_file)
 	{
 		yyin = fopen(in_file, "r");
-		if (! yyin)
-			return fprintf(stderr, "File: '%s' not found\n", in_file), -1;
+		CHECK(yyin, FILE_NOT_FOUND, in_file);
 	}
 
 	return 0;
@@ -29,11 +28,8 @@ int open_file(char const* in_file)
 
 program_node_t* parse_file(char const* in_file)
 {
-	if (open_file(in_file))
-		return NULL;
-
-	if (yyparse())
-		return fprintf(stderr, "\nParsing failed\n"), NULL;
+	CHECK(!open_file(in_file), ASSERT,);
+	CHECK(! yyparse(), PARSING_FAILED,);
 
 	if (yyin != stdin)
 		fclose(yyin);
@@ -45,14 +41,11 @@ program_node_t* parse_file(char const* in_file)
 int compile_file(compiler_args_t* args)
 {
 	program_node_t* prog = parse_file(args->in_file);
-
-	if (! prog)
-		return -1;
+	CHECK(prog, ASSERT,);
 
 	error_t ret;
 	char *module_name;
-	if (! asprintf(&module_name, "%s-module", args->in_file ? args->in_file : "stdin"))
-		return -1;
+	CHECK(asprintf(&module_name, "%s-module", args->in_file ? args->in_file : "stdin"), UNDERLYING,);
 
 	ret = me_process(prog);
 	if (ret)

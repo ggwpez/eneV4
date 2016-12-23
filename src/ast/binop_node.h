@@ -1,24 +1,22 @@
 #pragma once
 
 #include "ast.h"
+#include "../enums.h"
 
-typedef enum binop
-{
-	BINOP_ADD,
-	BINOP_SUB,
-	BINOP_MUL,
-	BINOP_DIV,
-	BINOP_DRF,
-	BINOP_EQU,
-	BINOP_ASS,
-	BINOP_SML,
-	BINOP_GRT,
-	BINOP_AND,
-	BINOP_SEQ,		// c comma operator, result is the last expression. right assoc.
-	BINOP_OR,
-	BINOP_size
-} binop_t;
-extern char const* binop_strings[];
+#define BINOP_ENUM	(BINOP_ADD)\
+					(BINOP_SUB)\
+					(BINOP_MUL)\
+					(BINOP_DIV)\
+					(BINOP_EQU)\
+					(BINOP_ASS)\
+					(BINOP_ARR)\
+					(BINOP_SML)\
+					(BINOP_GRT)\
+					(BINOP_AND)\
+					(BINOP_OR)\
+					(BINOP_SEQ)\
+					(BINOP_size)
+MAKE_ENUM(binop, BINOP_ENUM)
 
 typedef struct binop_node
 {
